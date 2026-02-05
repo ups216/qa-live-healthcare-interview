@@ -34,3 +34,11 @@ a {
   width: 100%;
   min-height: 100vh;
 }
+
+/* 修复：Modal 内输入框/文本框可选中与粘贴（Ant Design 动画会应用 user-select: none） */
+.ant-modal-body textarea,
+.ant-modal-body input[type="text"],
+.ant-modal-body input[type="password"] {
+  user-select: text;
+  -webkit-user-select: text;
+}

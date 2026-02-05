@@ -1,7 +1,14 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
+import { store } from './store';
+
+/** 应用挂载时拉取医生列表，供首页统计/开放诊室与医生页共用 */
+onMounted(() => {
+  store.fetchDoctors();
+});
 </script>
 
 <template>

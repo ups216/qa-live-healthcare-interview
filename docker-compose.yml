@@ -1,0 +1,44 @@
+# 面试要求：创建 mysql 数据库并挂接 phpMyAdmin 作为数据库管理界面
+# 使用方式：在项目根目录执行 docker-compose up -d
+# 启动顺序：先启动本 compose，再启动 qa-service-user
+
+version: '3.8'
+
+services:
+  mysql:
+    image: docker.1ms.run/mysql:8.0
+    container_name: qa-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: qa_user
+      MYSQL_USER: qa_app
+      MYSQL_PASSWORD: qa_app_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: docker.1ms.run/phpmyadmin:latest
+    container_name: qa-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root123
+    ports:
+      - "8082:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

@@ -6,7 +6,21 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <!-- 加载中：不崩溃，有可识别反馈 -->
+      <div v-if="store.state.doctorsLoading" class="state-message">
+        <a-spin size="large" />
+        <p>加载医生列表中...</p>
+      </div>
+      <!-- 请求失败 -->
+      <div v-else-if="store.state.doctorsError" class="state-message error">
+        <a-alert type="error" :message="store.state.doctorsError" show-icon />
+      </div>
+      <!-- 空列表 -->
+      <div v-else-if="allDoctors.length === 0" class="state-message">
+        <a-empty description="暂无医生" />
+      </div>
+      <!-- 正常列表 -->
+      <div v-else class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -26,7 +40,7 @@
             <p class="doctor-department">{{ doctor.department }}</p>
             <p class="doctor-experience">{{ doctor.experience }}</p>
             <div class="doctor-specialties">
-              <a-tag v-for="specialty in doctor.specialties" :key="specialty" color="blue">
+              <a-tag v-for="specialty in (doctor.specialties || [])" :key="specialty" color="blue">
                 {{ specialty }}
               </a-tag>
             </div>
@@ -54,6 +68,7 @@ import { store, Doctor } from '../store';
 
 const router = useRouter();
 
+/** 医生列表来自 store，由 App 挂载时 fetchDoctors 拉取 */
 const allDoctors = computed(() => store.state.doctors);
 
 const goToConsultation = (doctor: Doctor) => {
@@ -92,6 +107,16 @@ const goToConsultation = (doctor: Doctor) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 48px 24px;
+}
+
+.state-message {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.state-message.error {
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .doctors-grid {

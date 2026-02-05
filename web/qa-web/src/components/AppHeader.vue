@@ -23,22 +23,48 @@
           关于
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <!-- 仅首页时在右上角展示语言切换，与 README「首页右上角」一致 -->
+      <div class="header-actions">
+        <a-select
+          v-if="isHome"
+          v-model:value="currentLocale"
+          class="locale-select"
+          size="small"
+          :options="localeOptions"
+          @change="onLocaleChange"
+        />
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          医生登录
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import type { LocaleKey } from '../locales';
+import { store } from '../store';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+
+const isHome = computed(() => route.path === '/');
+
+const localeOptions = [
+  { label: '中文', value: 'zh-CN' as LocaleKey },
+  { label: 'English', value: 'en' as LocaleKey },
+];
+
+const currentLocale = ref<LocaleKey>(store.state.locale);
+
+watch(() => store.state.locale, (l) => {
+  currentLocale.value = l;
+}, { immediate: true });
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -51,6 +77,10 @@ watch(() => route.path, (newPath) => {
     selectedKeys.value = ['about'];
   }
 }, { immediate: true });
+
+function onLocaleChange(value: LocaleKey) {
+  store.setLocale(value);
+}
 
 const navigateTo = (path: string) => {
   router.push(path);
@@ -106,6 +136,16 @@ const navigateTo = (path: string) => {
   border: none;
   margin: 0 40px;
   line-height: 64px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.locale-select {
+  width: 100px;
 }
 
 .login-btn {
