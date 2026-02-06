@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: docker.m.daocloud.io/library/mysql:8.0
+    container_name: healthcare-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: qjw123456.
+      MYSQL_DATABASE: healthcare
+      # 如需业务账号，可额外配置：
+      # MYSQL_USER: healthcare_user
+      # MYSQL_PASSWORD: healthcare_pwd
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+
+  phpmyadmin:
+    image: docker.m.daocloud.io/phpmyadmin/phpmyadmin:latest
+    container_name: healthcare-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      # 允许在页面选择任意主机（可选）
+      PMA_ARBITRARY: 1
+    depends_on:
+      - mysql
+    ports:
+      - "8081:80"

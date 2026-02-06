@@ -1,0 +1,24 @@
+{
+  "home": {
+    "heroTitle": "Professional Online Healthcare Consultation Platform",
+    "heroSubtitle": "Connecting patients with professional doctors to provide convenient and efficient medical services",
+    "featureDoctorTeam": "Professional doctor team",
+    "featureRealtime": "Real-time online consultation",
+    "featurePrivacy": "Privacy protection",
+    "actionConsult": "Consult now",
+    "actionViewDoctors": "View doctors",
+    "statDoctors": "Doctors",
+    "statQuestions": "Total questions",
+    "statPending": "Pending questions",
+    "statRooms": "Online rooms",
+    "activeRoomsTitle": "Open consultation rooms",
+    "activeRoomsSubtitle": "The following doctor rooms are open for consultation",
+    "enterRoom": "Enter room"
+  },
+  "header": {
+    "language": "Language",
+    "langZh": "Chinese",
+    "langEn": "English"
+  }
+}
+
