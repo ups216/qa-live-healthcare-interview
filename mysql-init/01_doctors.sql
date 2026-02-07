@@ -21,9 +21,9 @@ INSERT INTO doctors (
 ) VALUES
   (
     'doc001',
-    'dr-zhang-wei',
+    'qijingwei',
     '123456',
-    '张伟医生',
+    '齐京位医生0207',
     '主任医师',
     '心内科',
     'https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400',

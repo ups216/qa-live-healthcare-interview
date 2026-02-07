@@ -7,11 +7,15 @@ services:
     restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: qjw123456.
+      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: healthcare
+      # MYSQL_ALLOW_EMPTY_PASSWORD: "no"
       # 如需业务账号，可额外配置：
       # MYSQL_USER: healthcare_user
       # MYSQL_PASSWORD: healthcare_pwd
+      LANG: C.UTF-8
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     volumes:

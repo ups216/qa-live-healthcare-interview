@@ -49,6 +49,12 @@ curl -s http://localhost:8080/api/doctors | jq '.[] | select(.active == true)'
 
 ## 2. CORS 测试（验证前端跨域访问）
 
+前端开发启动：
+     cd web/qa-web
+     npm install
+     npm run dev
+
+
 使用浏览器访问前端 `web/qa-web` 的首页与医生列表页面，打开开发者工具 Network 面板，确认有对：
 
 - `GET http://localhost:8080/api/doctors`
