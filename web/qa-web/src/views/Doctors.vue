@@ -6,7 +6,14 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <div v-if="loading" class="loading-state">
+        <a-spin size="large" tip="加载中..." />
+      </div>
+      <div v-else-if="error" class="error-state">
+        <a-alert :message="error" type="error" show-icon />
+        <a-button @click="fetchDoctors" style="margin-top: 16px">重试</a-button>
+      </div>
+      <div v-else class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -48,13 +55,49 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { store, Doctor } from '../store';
+
+interface Doctor {
+  id: string;
+  username: string;
+  name: string;
+  title: string;
+  department: string;
+  avatar: string;
+  experience: string;
+  specialties: string[];
+  isActive: boolean;
+}
 
 const router = useRouter();
+const allDoctors = ref<Doctor[]>([]);
+const loading = ref(false);
+const error = ref('');
 
-const allDoctors = computed(() => store.state.doctors);
+const API_BASE_URL = 'http://localhost:8080/api';
+
+const fetchDoctors = async () => {
+  loading.value = true;
+  error.value = '';
+  try {
+    const response = await fetch(`${API_BASE_URL}/doctors`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch doctors');
+    }
+    const data = await response.json();
+    allDoctors.value = data;
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Error fetching doctors:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchDoctors();
+});
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
@@ -159,6 +202,15 @@ const goToConsultation = (doctor: Doctor) => {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
 }
 
 @media (max-width: 768px) {
