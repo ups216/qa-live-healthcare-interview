@@ -1,8 +1,8 @@
 <template>
   <div class="doctors-page">
     <div class="page-header">
-      <h1>医生团队</h1>
-      <p>我们的专业医疗团队随时为您服务</p>
+      <h1>{{ $t('doctors.title') }}</h1>
+      <p>{{ $t('doctors.subtitle') }}</p>
     </div>
 
     <div class="doctors-container">
