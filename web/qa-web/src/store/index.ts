@@ -1,20 +1,13 @@
-import { reactive, computed } from 'vue';
-import doctorDataZh from '../data/doctor-user-list.json';
-import doctorDataEn from '../data/doctor-user-list-en.json';
+import { reactive, computed, ref } from 'vue';
+import { doctorApi } from '../api';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
 import i18n from '../locales';
 
-// 获取当前语言的医生数据
-const getDoctorDataByLocale = () => {
-  const currentLocale = i18n.global.locale.value;
-  return currentLocale === 'en' ? doctorDataEn : doctorDataZh;
-};
-
 export interface Doctor {
   id: string;
   username: string;
-  password: string;
+  password?: string;
   name: string;
   title: string;
   department: string;
@@ -51,34 +44,96 @@ interface State {
   questions: Question[];
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const state = reactive<State>({
-  doctors: doctorDataZh as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
+  loading: false,
+  error: null,
 });
+
+// 缓存的医生数据
+const doctorsCache = ref<Doctor[]>([]);
 
 export const store = {
   state,
 
-  // 获取当前语言的医生数据
-  getDoctors(): Doctor[] {
-    return getDoctorDataByLocale() as Doctor[];
+  // 从后端获取所有医生
+  async fetchDoctors(): Promise<Doctor[]> {
+    try {
+      state.loading = true;
+      state.error = null;
+      const response = await doctorApi.getAllDoctors();
+      if (response.data.code === 200) {
+        doctorsCache.value = response.data.data;
+        state.doctors = response.data.data;
+        return response.data.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error);
+      state.error = 'Failed to fetch doctors';
+      return [];
+    } finally {
+      state.loading = false;
+    }
   },
 
-  loginDoctor(username: string, password: string): Doctor | null {
-    const doctors = this.getDoctors();
-    const doctor = doctors.find(
-      d => d.username === username && d.password === password
-    );
-    if (doctor) {
-      state.currentDoctor = doctor;
-      return doctor;
+  // 从后端获取在线医生
+  async fetchActiveDoctors(): Promise<Doctor[]> {
+    try {
+      state.loading = true;
+      state.error = null;
+      const response = await doctorApi.getActiveDoctors();
+      if (response.data.code === 200) {
+        return response.data.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch active doctors:', error);
+      state.error = 'Failed to fetch active doctors';
+      return [];
+    } finally {
+      state.loading = false;
     }
-    return null;
+  },
+
+  // 获取医生列表（优先使用缓存，如果没有则请求后端）
+  async getDoctors(): Promise<Doctor[]> {
+    if (doctorsCache.value.length === 0) {
+      await this.fetchDoctors();
+    }
+    return doctorsCache.value;
+  },
+
+  // 获取在线医生列表
+  async getActiveDoctors(): Promise<Doctor[]> {
+    return await this.fetchActiveDoctors();
+  },
+
+  async loginDoctor(username: string, password: string): Promise<Doctor | null> {
+    try {
+      state.loading = true;
+      state.error = null;
+      const response = await doctorApi.login(username, password);
+      if (response.data.code === 200) {
+        state.currentDoctor = response.data.data;
+        return response.data.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Login failed:', error);
+      state.error = 'Login failed';
+      return null;
+    } finally {
+      state.loading = false;
+    }
   },
 
   logoutDoctor() {
@@ -149,17 +204,11 @@ export const store = {
   },
 
   getDoctorByUsername(username: string): Doctor | undefined {
-    const doctors = this.getDoctors();
-    return doctors.find(d => d.username === username);
+    return doctorsCache.value.find(d => d.username === username);
   },
 
-  getActiveDoctors(): Doctor[] {
-    const doctors = this.getDoctors();
-    return doctors.filter(d => d.isActive);
-  },
-
-  getStatistics() {
-    const doctors = this.getDoctors();
+  async getStatistics() {
+    const doctors = await this.getDoctors();
     const totalDoctors = doctors.length;
     const totalQuestions = state.questions.length;
     const activeSessions = state.questions.filter(q => q.status === 'pending').length;

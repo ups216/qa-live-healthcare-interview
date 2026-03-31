@@ -46,5 +46,13 @@ export default {
     terms: '服务条款',
     disclaimer: '医疗免责声明',
     copyright: '版权所有'
+  },
+  doctors: {
+    title: '医生团队',
+    subtitle: '我们的专业医疗团队随时为您服务',
+    online: '在线',
+    offline: '离线',
+    enterRoom: '进入诊室',
+    notAvailable: '暂未开放'
   }
 }

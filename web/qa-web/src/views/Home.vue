@@ -105,10 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { store } from '../store';
+import { store, Doctor } from '../store';
 import {
   CheckCircleOutlined,
   TeamOutlined,
@@ -120,24 +120,37 @@ import {
 const router = useRouter();
 const { locale } = useI18n();
 
-// 用于强制重新计算的数据版本号
-const dataVersion = ref(0);
+// 医生列表数据
+const activeDoctors = ref<Doctor[]>([]);
+const statistics = ref({
+  totalDoctors: 0,
+  totalQuestions: 0,
+  activeSessions: 0,
+  totalSessions: 0
+});
+const loading = ref(false);
 
-// 监听语言变化，更新数据版本号以触发重新计算
+// 加载医生数据
+const loadDoctors = async () => {
+  loading.value = true;
+  try {
+    activeDoctors.value = await store.getActiveDoctors();
+    statistics.value = await store.getStatistics();
+  } catch (error) {
+    console.error('Failed to load doctors:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadDoctors();
+});
+
+// 监听语言变化，重新加载数据
 watch(() => locale.value, () => {
-  dataVersion.value++;
-});
-
-const statistics = computed(() => {
-  // 依赖 dataVersion 以确保语言变化时重新计算
-  dataVersion.value;
-  return store.getStatistics();
-});
-
-const activeDoctors = computed(() => {
-  // 依赖 dataVersion 以确保语言变化时重新计算
-  dataVersion.value;
-  return store.getActiveDoctors();
+  loadDoctors();
 });
 
 const navigateTo = (path: string) => {

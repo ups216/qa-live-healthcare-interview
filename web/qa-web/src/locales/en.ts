@@ -46,5 +46,13 @@ export default {
     terms: 'Terms of Service',
     disclaimer: 'Medical Disclaimer',
     copyright: 'All Rights Reserved'
+  },
+  doctors: {
+    title: 'Medical Team',
+    subtitle: 'Our professional medical team is ready to serve you',
+    online: 'Online',
+    offline: 'Offline',
+    enterRoom: 'Enter Room',
+    notAvailable: 'Not Available'
   }
 }
