@@ -1,7 +1,15 @@
-import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
+import { reactive, computed } from 'vue';
+import doctorDataZh from '../data/doctor-user-list.json';
+import doctorDataEn from '../data/doctor-user-list-en.json';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
+import i18n from '../locales';
+
+// 获取当前语言的医生数据
+const getDoctorDataByLocale = () => {
+  const currentLocale = i18n.global.locale.value;
+  return currentLocale === 'en' ? doctorDataEn : doctorDataZh;
+};
 
 export interface Doctor {
   id: string;
@@ -46,7 +54,7 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: doctorDataZh as Doctor[],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
@@ -56,8 +64,14 @@ const state = reactive<State>({
 export const store = {
   state,
 
+  // 获取当前语言的医生数据
+  getDoctors(): Doctor[] {
+    return getDoctorDataByLocale() as Doctor[];
+  },
+
   loginDoctor(username: string, password: string): Doctor | null {
-    const doctor = state.doctors.find(
+    const doctors = this.getDoctors();
+    const doctor = doctors.find(
       d => d.username === username && d.password === password
     );
     if (doctor) {
@@ -129,24 +143,27 @@ export const store = {
     const question = state.questions.find(q => q.id === questionId);
     if (question) {
       question.status = 'answered';
-      question.answer = '已口述解答';
+      question.answer = i18n.global.locale.value === 'en' ? 'Orally answered' : '已口述解答';
       question.answerTime = new Date().toISOString();
     }
   },
 
   getDoctorByUsername(username: string): Doctor | undefined {
-    return state.doctors.find(d => d.username === username);
+    const doctors = this.getDoctors();
+    return doctors.find(d => d.username === username);
   },
 
   getActiveDoctors(): Doctor[] {
-    return state.doctors.filter(d => d.isActive);
+    const doctors = this.getDoctors();
+    return doctors.filter(d => d.isActive);
   },
 
   getStatistics() {
-    const totalDoctors = state.doctors.length;
+    const doctors = this.getDoctors();
+    const totalDoctors = doctors.length;
     const totalQuestions = state.questions.length;
     const activeSessions = state.questions.filter(q => q.status === 'pending').length;
-    const totalSessions = state.doctors.filter(d => d.isActive).length;
+    const totalSessions = doctors.filter(d => d.isActive).length;
 
     return {
       totalDoctors,
