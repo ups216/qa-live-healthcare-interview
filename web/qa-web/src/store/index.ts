@@ -1,7 +1,8 @@
-import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
+import { reactive, ref } from 'vue';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
+import { Locale, defaultLocale } from '../locales';
+import { ApiService } from '../services/api';
 
 export interface Doctor {
   id: string;
@@ -43,18 +44,32 @@ interface State {
   questions: Question[];
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
+  currentLocale: Locale;
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
+  currentLocale: defaultLocale,
 });
 
 export const store = {
   state,
+
+  // 加载医生数据
+  async loadDoctors(): Promise<void> {
+    try {
+      const doctors = await ApiService.getActiveDoctors();
+      state.doctors = doctors;
+    } catch (error) {
+      console.error('Failed to load doctors:', error);
+      // 如果API调用失败，可以回退到本地数据
+      // 这里需要导入本地数据，但为了简化，我们暂时不处理
+    }
+  },
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(
@@ -154,5 +169,13 @@ export const store = {
       activeSessions,
       totalSessions,
     };
+  },
+
+  setLocale(locale: Locale) {
+    state.currentLocale = locale;
+  },
+
+  getCurrentLocale(): Locale {
+    return state.currentLocale;
   },
 };

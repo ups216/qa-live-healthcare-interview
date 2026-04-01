@@ -6,7 +6,25 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <a-spin size="large" />
+        <p>正在加载医生数据...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-else-if="error" class="error-container">
+        <a-alert
+          message="加载失败"
+          :description="error"
+          type="error"
+          show-icon
+        />
+        <a-button type="primary" @click="loadDoctors">重新加载</a-button>
+      </div>
+
+      <!-- 医生列表 -->
+      <div v-else class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -48,17 +66,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
+const loading = ref(false);
+const error = ref<string | null>(null);
 
 const allDoctors = computed(() => store.state.doctors);
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
 };
+
+const loadDoctors = async () => {
+  loading.value = true;
+  error.value = null;
+  try {
+    await store.loadDoctors();
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '加载医生数据失败';
+    console.error('Failed to load doctors:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadDoctors();
+});
 </script>
 
 <style scoped>
@@ -159,6 +196,31 @@ const goToConsultation = (doctor: Doctor) => {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  text-align: center;
+}
+
+.loading-container p {
+  margin-top: 16px;
+  color: #666;
+  font-size: 16px;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  text-align: center;
+  gap: 16px;
 }
 
 @media (max-width: 768px) {
