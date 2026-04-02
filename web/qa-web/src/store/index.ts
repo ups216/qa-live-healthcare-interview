@@ -1,5 +1,4 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
 
@@ -46,7 +45,7 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
@@ -55,6 +54,20 @@ const state = reactive<State>({
 
 export const store = {
   state,
+
+  async fetchDoctors() {
+    try {
+      const response = await fetch('http://localhost:8080/api/doctors');
+      if (response.ok) {
+        const doctors = await response.json();
+        state.doctors = doctors;
+      } else {
+        console.error('Failed to fetch doctors');
+      }
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+    }
+  },
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(

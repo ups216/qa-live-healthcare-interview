@@ -8,25 +8,41 @@
       <a-menu v-model:selectedKeys="selectedKeys" mode="horizontal" class="nav-menu">
         <a-menu-item key="home" @click="navigateTo('/')">
           <HomeOutlined />
-          首页
+          {{ t('nav.home') }}
         </a-menu-item>
         <a-menu-item key="consultation" @click="navigateTo('/consultation')">
           <MessageOutlined />
-          问诊
+          {{ t('nav.consultation') }}
         </a-menu-item>
         <a-menu-item key="doctors" @click="navigateTo('/doctors')">
           <TeamOutlined />
-          医生
+          {{ t('nav.doctors') }}
         </a-menu-item>
         <a-menu-item key="about" @click="navigateTo('/about')">
           <InfoCircleOutlined />
-          关于
+          {{ t('nav.about') }}
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      
+      <div class="header-actions" style="display: flex; align-items: center; gap: 16px">
+        <a-dropdown>
+          <a class="ant-dropdown-link" @click.prevent>
+            {{ locale === 'zh' ? '中文' : 'English' }}
+            <DownOutlined />
+          </a>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="changeLanguage('zh')">中文</a-menu-item>
+              <a-menu-item @click="changeLanguage('en')">English</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          {{ t('nav.login') }}
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
@@ -34,11 +50,24 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { useI18n } from 'vue-i18n';
+import { 
+  HomeOutlined, 
+  MessageOutlined, 
+  TeamOutlined, 
+  InfoCircleOutlined, 
+  UserOutlined,
+  DownOutlined 
+} from '@ant-design/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
+const { t, locale } = useI18n();
 const selectedKeys = ref<string[]>(['home']);
+
+const changeLanguage = (lang: string) => {
+  locale.value = lang;
+};
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
