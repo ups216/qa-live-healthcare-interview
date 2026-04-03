@@ -1,20 +1,9 @@
-import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
+import { reactive, ref } from 'vue';
+import { apiService, type Doctor as ApiDoctor, type ApiResponse } from '../services/api';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
 
-export interface Doctor {
-  id: string;
-  username: string;
-  password: string;
-  name: string;
-  title: string;
-  department: string;
-  avatar: string;
-  experience: string;
-  specialties: string[];
-  isActive: boolean;
-}
+export interface Doctor extends ApiDoctor {}
 
 export interface Patient {
   id: string;
@@ -43,28 +32,70 @@ interface State {
   questions: Question[];
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
+  loading: false,
+  error: null,
 });
+
+// 响应式引用用于存储异步加载的医生数据
+const doctorsRef = ref<Doctor[]>([]);
 
 export const store = {
   state,
+  doctors: doctorsRef,
 
-  loginDoctor(username: string, password: string): Doctor | null {
-    const doctor = state.doctors.find(
-      d => d.username === username && d.password === password
-    );
-    if (doctor) {
-      state.currentDoctor = doctor;
-      return doctor;
+  // 加载医生数据
+  async loadDoctors() {
+    state.loading = true;
+    state.error = null;
+    
+    try {
+      const response = await apiService.getAllDoctors();
+      if (response.success && response.data) {
+        state.doctors = response.data;
+        doctorsRef.value = response.data;
+        console.log('成功加载医生数据:', response.data.length, '位医生');
+      } else {
+        state.error = response.message || '加载医生数据失败';
+        console.error('Failed to load doctors:', response.message);
+      }
+    } catch (error) {
+      state.error = error instanceof Error ? error.message : '网络请求失败';
+      console.error('Error loading doctors:', error);
+    } finally {
+      state.loading = false;
     }
-    return null;
+  },
+
+  // 医生登录
+  async loginDoctor(username: string, password: string): Promise<Doctor | null> {
+    state.loading = true;
+    state.error = null;
+    
+    try {
+      const response = await apiService.login({ username, password });
+      if (response.success && response.data) {
+        state.currentDoctor = response.data;
+        return response.data;
+      } else {
+        state.error = response.message || '登录失败';
+        return null;
+      }
+    } catch (error) {
+      state.error = error instanceof Error ? error.message : '网络请求失败';
+      return null;
+    } finally {
+      state.loading = false;
+    }
   },
 
   logoutDoctor() {
@@ -154,5 +185,20 @@ export const store = {
       activeSessions,
       totalSessions,
     };
+  },
+
+  // 获取加载状态
+  get isLoading(): boolean {
+    return state.loading;
+  },
+
+  // 获取错误信息
+  get errorMessage(): string | null {
+    return state.error;
+  },
+
+  // 清除错误信息
+  clearError() {
+    state.error = null;
   },
 };

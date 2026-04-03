@@ -77,18 +77,21 @@ const rules = {
 const onFinish = async () => {
   loading.value = true;
 
-  setTimeout(() => {
-    const doctor = store.loginDoctor(formState.username, formState.password);
+  try {
+    const doctor = await store.loginDoctor(formState.username, formState.password);
 
     if (doctor) {
       message.success('登录成功');
       router.push(`/doctor/room/${doctor.username}`);
     } else {
-      message.error('用户名或密码错误');
+      message.error(store.errorMessage || '用户名或密码错误');
     }
-
+  } catch (error) {
+    message.error('登录失败，请检查网络连接');
+    console.error('Login error:', error);
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 </script>
 

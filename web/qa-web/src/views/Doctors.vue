@@ -6,7 +6,27 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <a-spin size="large" />
+        <p>正在加载医生数据...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-else-if="error" class="error-container">
+        <a-alert
+          message="加载失败"
+          :description="error"
+          type="error"
+          show-icon
+          closable
+          @close="error = null"
+        />
+        <a-button type="primary" @click="loadDoctors">重新加载</a-button>
+      </div>
+
+      <!-- 医生列表 -->
+      <div v-else-if="allDoctors.length > 0" class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -43,22 +63,53 @@
           </div>
         </a-card>
       </div>
+
+      <!-- 空状态 -->
+      <div v-else class="empty-container">
+        <a-empty description="暂无医生数据" />
+        <a-button type="primary" @click="loadDoctors">重新加载</a-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
+const loading = ref(false);
+const error = ref<string | null>(null);
 
-const allDoctors = computed(() => store.state.doctors);
+const allDoctors = computed(() => store.doctors.value);
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
 };
+
+// 加载医生数据
+const loadDoctors = async () => {
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    await store.loadDoctors();
+    if (store.errorMessage) {
+      error.value = store.errorMessage;
+    }
+  } catch (err) {
+    error.value = '加载医生数据失败';
+    console.error('Error loading doctors:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadDoctors();
+});
 </script>
 
 <style scoped>
@@ -92,6 +143,39 @@ const goToConsultation = (doctor: Doctor) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 48px 24px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.loading-container p {
+  margin-top: 16px;
+  font-size: 16px;
+  color: #666;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 24px;
+}
+
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  gap: 24px;
 }
 
 .doctors-grid {

@@ -3,42 +3,103 @@
     <div class="header-content">
       <div class="logo">
         <img src="https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg?auto=compress&cs=tinysrgb&w=100" alt="QA Live Healthcare" />
-        <span>QA Live Healthcare</span>
+        <span>{{ t.app.title }}</span>
       </div>
       <a-menu v-model:selectedKeys="selectedKeys" mode="horizontal" class="nav-menu">
         <a-menu-item key="home" @click="navigateTo('/')">
           <HomeOutlined />
-          首页
+          {{ t.app.home }}
         </a-menu-item>
         <a-menu-item key="consultation" @click="navigateTo('/consultation')">
           <MessageOutlined />
-          问诊
+          {{ t.app.consultation }}
         </a-menu-item>
         <a-menu-item key="doctors" @click="navigateTo('/doctors')">
           <TeamOutlined />
-          医生
+          {{ t.app.doctors }}
         </a-menu-item>
         <a-menu-item key="about" @click="navigateTo('/about')">
           <InfoCircleOutlined />
-          关于
+          {{ t.app.about }}
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <a-select
+          v-model:value="currentLocale"
+          :options="availableLocales"
+          size="small"
+          class="language-selector"
+          @change="handleLanguageChange"
+        />
+        <div v-if="userStore.state.isLoggedIn" class="user-info">
+          <a-dropdown :trigger="['click']">
+            <a-button type="text" class="user-info-btn">
+              <UserOutlined />
+              {{ userStore.state.user?.name || userStore.state.user?.username }}
+            </a-button>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item key="logout" @click="handleLogout">
+                  <LogoutOutlined />
+                  退出登录
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </div>
+        <div v-else class="login-buttons">
+          <a-button type="primary" class="user-login-btn" @click="showUserLoginModal">
+            <UserOutlined />
+            用户登录
+          </a-button>
+          <a-button type="primary" class="doctor-login-btn" @click="navigateTo('/doctor/login')">
+            <UserOutlined />
+            {{ t.app.doctorLogin }}
+          </a-button>
+        </div>
+      </div>
     </div>
+    <UserLoginModal
+      :visible="userLoginModalVisible"
+      @update:visible="(value) => userLoginModalVisible = value"
+      @success="handleUserLoginSuccess"
+      @cancel="handleUserLoginCancel"
+    />
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons-vue';
+import { useI18n, type Locale } from '../composables/useI18n';
+import UserLoginModal from './UserLoginModal.vue';
+import { userStore } from '../store/userStore';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+
+const { t, locale, setLocale, availableLocales } = useI18n();
+const currentLocale = ref<Locale>(locale.value);
+
+const userLoginModalVisible = ref(false);
+
+const showUserLoginModal = () => {
+  userLoginModalVisible.value = true;
+};
+
+const handleUserLoginSuccess = () => {
+  userLoginModalVisible.value = false;
+};
+
+const handleUserLoginCancel = () => {
+  userLoginModalVisible.value = false;
+};
+
+const handleLogout = () => {
+  userStore.logout();
+};
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -54,6 +115,10 @@ watch(() => route.path, (newPath) => {
 
 const navigateTo = (path: string) => {
   router.push(path);
+};
+
+const handleLanguageChange = (value: Locale) => {
+  setLocale(value);
 };
 </script>
 
@@ -108,13 +173,60 @@ const navigateTo = (path: string) => {
   line-height: 64px;
 }
 
-.login-btn {
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.language-selector {
+  width: 120px;
+}
+
+.language-selector :deep(.ant-select-selector) {
+  border-radius: 6px;
+}
+
+.user-login-btn {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.user-login-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.doctor-login-btn {
   background: #52c41a;
   border-color: #52c41a;
 }
 
-.login-btn:hover {
+.doctor-login-btn:hover {
   background: #73d13d;
   border-color: #73d13d;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-info-btn {
+  color: #1890ff;
+  font-weight: 500;
+  border: none;
+  box-shadow: none;
+}
+
+.user-info-btn:hover {
+  color: #40a9ff;
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.login-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

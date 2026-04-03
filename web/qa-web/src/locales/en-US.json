@@ -1,0 +1,31 @@
+{
+  "app": {
+    "title": "QA Live Healthcare",
+    "home": "Home",
+    "consultation": "Consultation",
+    "doctors": "Doctors",
+    "about": "About",
+    "doctorLogin": "Doctor Login"
+  },
+  "home": {
+    "heroTitle": "Professional Online Medical Consultation Platform",
+    "heroSubtitle": "Connecting professional doctors with patients, providing convenient and efficient medical consultation services",
+    "feature1": "Professional Doctor Team",
+    "feature2": "Real-time Online Consultation",
+    "feature3": "Privacy Security Protection",
+    "consultationBtn": "Start Consultation",
+    "doctorsBtn": "View Doctors",
+    "statistics": {
+      "doctors": "Professional Doctors",
+      "questions": "Total Questions",
+      "activeSessions": "Pending Responses",
+      "sessions": "Online Rooms"
+    },
+    "activeRooms": {
+      "title": "Open Rooms",
+      "subtitle": "The following doctor rooms are open, welcome to consult",
+      "enterRoom": "Enter Room",
+      "online": "Online"
+    }
+  }
+}
