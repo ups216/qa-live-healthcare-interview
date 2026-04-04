@@ -1,0 +1,79 @@
+{
+  "home": {
+    "title": "Professional Online Healthcare Platform",
+    "subtitle": "Connect with professional doctors and patients, providing convenient and efficient medical consultation services",
+    "features": {
+      "professional": "Professional Doctor Team",
+      "realtime": "Real-time Online Consultation",
+      "privacy": "Privacy & Security Protection"
+    },
+    "actions": {
+      "consultNow": "Consult Now",
+      "viewDoctors": "View Doctors"
+    },
+    "statistics": {
+      "totalDoctors": "Professional Doctors",
+      "totalQuestions": "Total Questions",
+      "activeSessions": "Pending Questions",
+      "onlineRooms": "Online Rooms"
+    },
+    "rooms": {
+      "title": "Open Consultation Rooms",
+      "subtitle": "The following doctor rooms are open for consultation",
+      "online": "Online",
+      "enterRoom": "Enter Room"
+    }
+  },
+  "header": {
+    "home": "Home",
+    "consultation": "Consultation",
+    "doctors": "Doctors",
+    "about": "About",
+    "login": "Doctor Login",
+    "patientLogin": "Patient Login",
+    "patientLogout": "Logout"
+  },
+  "patient": {
+    "login": {
+      "title": "Patient Login",
+      "phone": "Enter phone number",
+      "password": "Enter password",
+      "submit": "Login",
+      "register": "Register",
+      "success": "Login successful",
+      "failed": "Login failed, please check phone and password"
+    },
+    "register": {
+      "title": "Patient Registration",
+      "phone": "Enter phone number",
+      "code": "Enter verification code",
+      "password": "Set password (8-20 chars, letter + number)",
+      "confirmPassword": "Confirm password",
+      "name": "Enter name",
+      "gender": "Select gender",
+      "genderUnknown": "Unknown",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "birthday": "Select birthday",
+      "submit": "Register",
+      "login": "Already have account? Login",
+      "sendCode": "Get Code",
+      "codeSent": "Verification code sent",
+      "codeFailed": "Failed to send code",
+      "success": "Registration successful",
+      "failed": "Registration failed, please try again"
+    },
+    "validation": {
+      "phoneRequired": "Please enter phone number",
+      "phoneFormat": "Please enter a valid phone number",
+      "passwordRequired": "Please enter password",
+      "passwordFormat": "Password must be 8-20 chars with letters and numbers",
+      "confirmPasswordRequired": "Please confirm password",
+      "passwordMismatch": "Passwords do not match",
+      "nameRequired": "Please enter name",
+      "nameLength": "Name must be 2-20 characters",
+      "codeRequired": "Please enter verification code",
+      "codeLength": "Verification code must be 6 digits"
+    }
+  }
+}

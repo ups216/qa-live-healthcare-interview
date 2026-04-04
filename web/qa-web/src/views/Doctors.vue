@@ -48,13 +48,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { store, Doctor } from '../store';
+import { store, type Doctor } from '../store';
 
 const router = useRouter();
+const allDoctors = ref<Doctor[]>([]);
+const loading = ref(true);
 
-const allDoctors = computed(() => store.state.doctors);
+onMounted(async () => {
+  try {
+    allDoctors.value = await store.getActiveDoctors();
+  } finally {
+    loading.value = false;
+  }
+});
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
