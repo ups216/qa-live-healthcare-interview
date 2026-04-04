@@ -1,14 +1,9 @@
 import { createI18n } from 'vue-i18n';
-import { zhCN, enUS } from './locales';
-
-const messages = {
-  'zh-CN': zhCN,
-  'en-US': enUS
-};
+import { messages, locale } from './locales';
 
 const i18n = createI18n({
   legacy: false,
-  locale: 'zh-CN',
+  locale: locale,
   fallbackLocale: 'zh-CN',
   messages
 });

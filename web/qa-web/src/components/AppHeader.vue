@@ -36,8 +36,23 @@
             </a-menu>
           </template>
         </a-dropdown>
-        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+        <a-dropdown v-if="isPatientLoggedIn">
+          <a-button type="primary" class="patient-btn">
+            <UserOutlined />
+            {{ currentPatientName }}
+          </a-button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item key="profile" @click="viewProfile">个人中心</a-menu-item>
+              <a-menu-item key="logout" @click="handleLogout">{{ $t('header.patientLogout') }}</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <a-button v-else type="primary" class="login-btn" @click="goToPatientLogin">
           <UserOutlined />
+          {{ $t('header.patientLogin') }}
+        </a-button>
+        <a-button class="doctor-login-btn" @click="navigateTo('/doctor/login')">
           {{ $t('header.login') }}
         </a-button>
       </div>
@@ -46,19 +61,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined, GlobalOutlined } from '@ant-design/icons-vue';
 import type { MenuProps } from 'ant-design-vue';
 import { localeNames, type Locale } from '../locales';
+import { auth } from '../utils/auth';
+import { patientApi } from '../api/patient';
 
 const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
 const selectedKeys = ref<string[]>(['home']);
 
+const isPatientLoggedIn = ref(false);
+const currentPatientName = ref('');
+
 const currentLocaleName = computed(() => localeNames[locale.value as Locale]);
+
+const checkPatientLogin = () => {
+  isPatientLoggedIn.value = auth.isLoggedIn();
+};
+
+const loadPatientProfile = async () => {
+  if (isPatientLoggedIn.value) {
+    try {
+      const profile = await patientApi.getProfile();
+      currentPatientName.value = profile.name;
+    } catch (error) {
+      console.error('Failed to load patient profile:', error);
+    }
+  }
+};
+
+const handleLogout = async () => {
+  try {
+    await patientApi.logout();
+  } catch (error) {
+    console.error('Logout API failed:', error);
+  }
+  auth.clearTokens();
+  isPatientLoggedIn.value = false;
+  currentPatientName.value = '';
+  // 退出登录后跳转到首页
+  router.push('/');
+};
+
+const viewProfile = () => {
+  router.push('/patient/profile');
+};
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -70,15 +122,32 @@ watch(() => route.path, (newPath) => {
   } else if (newPath.startsWith('/about')) {
     selectedKeys.value = ['about'];
   }
+  // 路由变化时重新检查登录状态
+  checkPatientLogin();
+  loadPatientProfile();
 }, { immediate: true });
 
 const navigateTo = (path: string) => {
   router.push(path);
 };
 
+// 跳转到患者登录页，根据是否在首页决定是否使用国际化
+const goToPatientLogin = () => {
+  const isHome = route.path === '/';
+  router.push({
+    path: '/patient/login',
+    query: isHome ? { from: 'home' } : {}
+  });
+};
+
 const handleLocaleChange: MenuProps['onClick'] = ({ key }) => {
   locale.value = key as Locale;
 };
+
+onMounted(() => {
+  checkPatientLogin();
+  loadPatientProfile();
+});
 </script>
 
 <style scoped>
@@ -153,5 +222,26 @@ const handleLocaleChange: MenuProps['onClick'] = ({ key }) => {
 .login-btn:hover {
   background: #73d13d;
   border-color: #73d13d;
+}
+
+.patient-btn {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.patient-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.doctor-login-btn {
+  background: transparent;
+  border-color: #d9d9d9;
+  color: #666;
+}
+
+.doctor-login-btn:hover {
+  color: #1890ff;
+  border-color: #1890ff;
 }
 </style>

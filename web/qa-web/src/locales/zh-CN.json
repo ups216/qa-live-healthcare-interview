@@ -1,0 +1,79 @@
+{
+  "home": {
+    "title": "专业在线医疗问诊平台",
+    "subtitle": "连接专业医生与患者,提供便捷、高效的医疗咨询服务",
+    "features": {
+      "professional": "专业医生团队",
+      "realtime": "实时在线问诊",
+      "privacy": "隐私安全保护"
+    },
+    "actions": {
+      "consultNow": "立即问诊",
+      "viewDoctors": "查看医生"
+    },
+    "statistics": {
+      "totalDoctors": "专业医生",
+      "totalQuestions": "问题总数",
+      "activeSessions": "待响应问题",
+      "onlineRooms": "在线诊室"
+    },
+    "rooms": {
+      "title": "开放诊室",
+      "subtitle": "以下医生诊室正在开放,欢迎咨询",
+      "online": "在线",
+      "enterRoom": "进入诊室"
+    }
+  },
+  "header": {
+    "home": "首页",
+    "consultation": "问诊",
+    "doctors": "医生",
+    "about": "关于",
+    "login": "医生登录",
+    "patientLogin": "患者登录",
+    "patientLogout": "退出登录"
+  },
+  "patient": {
+    "login": {
+      "title": "患者登录",
+      "phone": "请输入手机号",
+      "password": "请输入密码",
+      "submit": "登 录",
+      "register": "注册账号",
+      "success": "登录成功",
+      "failed": "登录失败，请检查手机号和密码"
+    },
+    "register": {
+      "title": "患者注册",
+      "phone": "请输入手机号",
+      "code": "请输入验证码",
+      "password": "设置密码 (8-20位，字母+数字)",
+      "confirmPassword": "确认密码",
+      "name": "请输入姓名",
+      "gender": "请选择性别",
+      "genderUnknown": "未知",
+      "genderMale": "男",
+      "genderFemale": "女",
+      "birthday": "请选择生日",
+      "submit": "注 册",
+      "login": "已有账户？登录",
+      "sendCode": "获取验证码",
+      "codeSent": "验证码已发送",
+      "codeFailed": "验证码发送失败",
+      "success": "注册成功",
+      "failed": "注册失败，请重试"
+    },
+    "validation": {
+      "phoneRequired": "请输入手机号",
+      "phoneFormat": "请输入正确的手机号",
+      "passwordRequired": "请输入密码",
+      "passwordFormat": "密码需8-20位，包含字母和数字",
+      "confirmPasswordRequired": "请确认密码",
+      "passwordMismatch": "两次密码输入不一致",
+      "nameRequired": "请输入姓名",
+      "nameLength": "姓名需2-20个字符",
+      "codeRequired": "请输入验证码",
+      "codeLength": "验证码为6位数字"
+    }
+  }
+}
