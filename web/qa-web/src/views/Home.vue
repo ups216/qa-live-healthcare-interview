@@ -2,28 +2,28 @@
   <div class="home">
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ $t('home.title') }}</h1>
+        <p class="hero-subtitle">{{ $t('home.subtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ $t('home.feature1') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ $t('home.feature2') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ $t('home.feature3') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ $t('home.startConsultation') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ $t('home.viewDoctors') }}
           </a-button>
         </div>
       </div>
@@ -39,7 +39,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <p>{{ $t('home.statistics.doctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +48,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ $t('home.statistics.questions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +57,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ $t('home.statistics.pending') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -66,14 +66,14 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <p>{{ $t('home.statistics.rooms') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ $t('home.activeRooms.title') }}</h2>
+      <p class="section-subtitle">{{ $t('home.activeRooms.subtitle') }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,7 +83,7 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="$t('home.activeRooms.online')" />
           </div>
           <div class="room-body">
             <h3>{{ doctor.name }}</h3>
@@ -96,7 +96,7 @@
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ $t('home.activeRooms.enterRoom') }}</a-button>
           </div>
         </div>
       </div>
@@ -105,9 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { store } from '../store';
+import { useI18n } from 'vue-i18n';
+import { store, Doctor } from '../store';
 import {
   CheckCircleOutlined,
   TeamOutlined,
@@ -117,9 +118,40 @@ import {
 } from '@ant-design/icons-vue';
 
 const router = useRouter();
+const { locale } = useI18n();
 
-const statistics = computed(() => store.getStatistics());
-const activeDoctors = computed(() => store.getActiveDoctors());
+// 医生列表数据
+const activeDoctors = ref<Doctor[]>([]);
+const statistics = ref({
+  totalDoctors: 0,
+  totalQuestions: 0,
+  activeSessions: 0,
+  totalSessions: 0
+});
+const loading = ref(false);
+
+// 加载医生数据
+const loadDoctors = async () => {
+  loading.value = true;
+  try {
+    activeDoctors.value = await store.getActiveDoctors();
+    statistics.value = await store.getStatistics();
+  } catch (error) {
+    console.error('Failed to load doctors:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadDoctors();
+});
+
+// 监听语言变化，重新加载数据
+watch(() => locale.value, () => {
+  loadDoctors();
+});
 
 const navigateTo = (path: string) => {
   router.push(path);

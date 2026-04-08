@@ -1,0 +1,25 @@
+# Logs
+logs/
+*.log
+test-api.log
+
+# Backend
+server/*/target/
+server/*/logs/
+
+# Frontend
+web/*/node_modules/
+web/*/dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.env
+docker-data/
