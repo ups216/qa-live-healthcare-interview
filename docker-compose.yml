@@ -1,0 +1,46 @@
+# 项目根目录 docker-compose：MySQL + phpMyAdmin，供本地开发与数据管理。
+# 镜像源：docker.1ms.run（国内镜像加速）
+# 使用方式：在项目根目录执行 docker-compose up -d，或使用 scripts/start-all.sh
+# 启动顺序：先启动本 compose，再启动 qa-service-user，最后启动前端。
+
+services:
+  mysql:
+    image: docker.1ms.run/mysql:8.0
+    container_name: qa-healthcare-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qa_healthcare
+      MYSQL_USER: qa_user
+      MYSQL_PASSWORD: qa_pass
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  phpmyadmin:
+    image: docker.1ms.run/phpmyadmin:latest
+    container_name: qa-healthcare-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: qa_user
+      PMA_PASSWORD: qa_pass
+      # phpMyAdmin 界面与连接使用 UTF-8，避免中文乱码
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

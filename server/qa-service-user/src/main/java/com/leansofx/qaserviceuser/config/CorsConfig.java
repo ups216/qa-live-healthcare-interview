@@ -8,6 +8,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * CORS 配置。当前适用于开发/联调环境，允许任意来源。
+ * 生产环境应限制 allowedOrigins 为具体前端域名，并注意 allowCredentials 与 origin 的配合，避免使用 *。
+ */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 

@@ -6,12 +6,30 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <!-- 加载中：明确反馈，不白屏 -->
+      <div v-if="store.state.doctorsLoading" class="state-message">
+        <a-spin size="large" />
+        <p>加载中...</p>
+      </div>
+
+      <!-- 请求失败：可识别错误提示 -->
+      <div v-else-if="store.state.doctorsError" class="state-message error">
+        <a-alert type="error" :message="store.state.doctorsError" show-icon />
+        <a-button type="primary" @click="store.fetchDoctors()">重试</a-button>
+      </div>
+
+      <!-- 空列表：暂无医生 -->
+      <div v-else-if="!store.state.doctors.length" class="state-message">
+        <a-empty description="暂无医生" />
+      </div>
+
+      <!-- 正常列表 -->
+      <div v-else class="doctors-grid">
         <a-card
-          v-for="doctor in allDoctors"
+          v-for="doctor in store.state.doctors"
           :key="doctor.id"
           class="doctor-card"
-          :class="{ 'active': doctor.isActive }"
+          :class="{ active: doctor.isActive }"
         >
           <div class="card-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
@@ -48,13 +66,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
-
-const allDoctors = computed(() => store.state.doctors);
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
@@ -92,6 +107,20 @@ const goToConsultation = (doctor: Doctor) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 48px 24px;
+}
+
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 280px;
+  color: #666;
+}
+
+.state-message.error {
+  gap: 24px;
 }
 
 .doctors-grid {

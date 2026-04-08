@@ -1,0 +1,19 @@
+{
+  "home": {
+    "title": "专业在线医疗问诊平台",
+    "subtitle": "连接专业医生与患者，提供便捷、高效的医疗咨询服务",
+    "feature1": "专业医生团队",
+    "feature2": "实时在线问诊",
+    "feature3": "隐私安全保护",
+    "btnAsk": "立即问诊",
+    "btnDoctors": "查看医生",
+    "statDoctors": "专业医生",
+    "statQuestions": "问题总数",
+    "statPending": "待响应问题",
+    "statSessions": "在线诊室",
+    "sectionRooms": "开放诊室",
+    "sectionRoomsSubtitle": "以下医生诊室正在开放，欢迎咨询",
+    "btnEnterRoom": "进入诊室",
+    "online": "在线"
+  }
+}

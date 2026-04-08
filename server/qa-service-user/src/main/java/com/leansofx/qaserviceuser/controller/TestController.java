@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * CORS 测试用接口，供前端或 curl 验证跨域配置是否生效。
+ */
 @RestController
 @RequestMapping("/api/test")
 public class TestController {

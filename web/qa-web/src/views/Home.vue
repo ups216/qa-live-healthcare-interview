@@ -1,29 +1,44 @@
 <template>
   <div class="home">
     <section class="hero">
+      <!-- 语言切换：仅在首页右上角展示，选择后动态切换文案 -->
+      <div class="hero-lang">
+        <a-dropdown v-model:open="langOpen" :trigger="['click']">
+          <a-button class="lang-btn">
+            {{ currentLabel }}
+            <DownOutlined />
+          </a-button>
+          <template #overlay>
+            <a-menu @click="onLangSelect">
+              <a-menu-item key="zh-CN">中文</a-menu-item>
+              <a-menu-item key="en">English</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </div>
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ t('home.title') }}</h1>
+        <p class="hero-subtitle">{{ t('home.subtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ t('home.feature1') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ t('home.feature2') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ t('home.feature3') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ t('home.btnAsk') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ t('home.btnDoctors') }}
           </a-button>
         </div>
       </div>
@@ -39,7 +54,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <p>{{ t('home.statDoctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +63,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ t('home.statQuestions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +72,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ t('home.statPending') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -66,14 +81,14 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <p>{{ t('home.statSessions') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ t('home.sectionRooms') }}</h2>
+      <p class="section-subtitle">{{ t('home.sectionRoomsSubtitle') }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,7 +98,7 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="t('home.online')" />
           </div>
           <div class="room-body">
             <h3>{{ doctor.name }}</h3>
@@ -96,7 +111,7 @@
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ t('home.btnEnterRoom') }}</a-button>
           </div>
         </div>
       </div>
@@ -105,19 +120,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { store } from '../store';
+import { useLocale } from '../locales';
 import {
   CheckCircleOutlined,
   TeamOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
-  UserOutlined
+  UserOutlined,
+  DownOutlined
 } from '@ant-design/icons-vue';
 
 const router = useRouter();
+const { locale, setLocale, t } = useLocale();
+const langOpen = ref(false);
 
+const currentLabel = computed(() => (locale.value === 'zh-CN' ? '中文' : 'English'));
+
+const onLangSelect = ({ key }: { key: string }) => {
+  setLocale(key as 'zh-CN' | 'en');
+  langOpen.value = false;
+};
+
+// 统计与开放诊室数据来自 API（store 从 GET /api/doctors 获取）
 const statistics = computed(() => store.getStatistics());
 const activeDoctors = computed(() => store.getActiveDoctors());
 
@@ -132,6 +159,7 @@ const navigateTo = (path: string) => {
 }
 
 .hero {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -139,6 +167,17 @@ const navigateTo = (path: string) => {
   margin: 0 auto;
   padding: 80px 24px;
   gap: 60px;
+}
+
+/* 语言切换仅在本页右上角 */
+.hero-lang {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}
+
+.lang-btn {
+  min-width: 100px;
 }
 
 .hero-content {
@@ -355,6 +394,11 @@ const navigateTo = (path: string) => {
   .hero {
     flex-direction: column;
     padding: 40px 24px;
+  }
+
+  .hero-lang {
+    top: 16px;
+    right: 16px;
   }
 
   .hero h1 {
