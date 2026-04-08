@@ -1,0 +1,35 @@
+{
+  "header": {
+    "home": "Home",
+    "consultation": "Consultation",
+    "doctors": "Doctors",
+    "about": "About",
+    "doctorLogin": "Doctor Login",
+    "language": "Language"
+  },
+  "home": {
+    "title": "Professional Online Medical Consultation Platform",
+    "subtitle": "Connecting professional doctors with patients, providing convenient and efficient medical consultation services",
+    "feature1": "Professional Medical Team",
+    "feature2": "Real-time Online Consultation",
+    "feature3": "Privacy & Security Protection",
+    "startConsultation": "Start Consultation",
+    "viewDoctors": "View Doctors",
+    "statistics": {
+      "totalDoctors": "Professional Doctors",
+      "totalQuestions": "Total Questions",
+      "activeSessions": "Pending Questions",
+      "totalSessions": "Online Rooms"
+    },
+    "activeRooms": {
+      "title": "Open Consultation Rooms",
+      "subtitle": "The following doctor rooms are currently open, welcome to consult",
+      "online": "Online",
+      "enterRoom": "Enter Room"
+    }
+  },
+  "language": {
+    "zh": "中文",
+    "en": "English"
+  }
+}
