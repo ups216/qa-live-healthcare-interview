@@ -1,0 +1,30 @@
+{
+  "home": {
+    "title": "Professional Online Healthcare Consultation Platform",
+    "subtitle": "Connecting professional doctors with patients, providing convenient and efficient medical consultation services",
+    "features": {
+      "professional": "Professional Medical Team",
+      "online": "Real-time Online Consultation",
+      "privacy": "Privacy and Security Protection"
+    },
+    "actions": {
+      "consultation": "Start Consultation",
+      "doctors": "View Doctors"
+    },
+    "statistics": {
+      "doctors": "Professional Doctors",
+      "questions": "Total Questions",
+      "active": "Active Sessions",
+      "sessions": "Online Consultations"
+    },
+    "rooms": {
+      "title": "Open Consultation Rooms",
+      "subtitle": "The following doctors' consultation rooms are open, welcome to consult",
+      "enter": "Enter Room"
+    }
+  },
+  "doctors": {
+    "title": "Medical Team",
+    "subtitle": "Our professional medical team is ready to serve you"
+  }
+}
