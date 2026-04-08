@@ -6,7 +6,13 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <a-spin v-if="loading" size="large" tip="加载中..." class="loading-wrapper" />
+      <a-result v-else-if="error" status="error" :title="'加载失败'" :sub-title="error">
+        <template #extra>
+          <a-button type="primary" @click="loadDoctors">重新加载</a-button>
+        </template>
+      </a-result>
+      <div v-else class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -48,17 +54,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
+const loading = ref(true);
+const error = ref<string | null>(null);
 
 const allDoctors = computed(() => store.state.doctors);
+
+const loadDoctors = async () => {
+  loading.value = true;
+  error.value = null;
+  try {
+    await store.fetchDoctors();
+  } catch (e: any) {
+    error.value = e.message || '获取医生列表失败';
+  } finally {
+    loading.value = false;
+  }
+};
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
 };
+
+onMounted(() => {
+  loadDoctors();
+});
 </script>
 
 <style scoped>
@@ -92,6 +116,12 @@ const goToConsultation = (doctor: Doctor) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 48px 24px;
+}
+
+.loading-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 100px 0;
 }
 
 .doctors-grid {
