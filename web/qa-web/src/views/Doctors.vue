@@ -1,44 +1,33 @@
 <template>
   <div class="doctors-page">
     <div class="page-header">
-      <h1>医生团队</h1>
-      <p>我们的专业医疗团队随时为您服务</p>
+      <h1>{{ current.doctors.title }}</h1>
+      <p>{{ current.doctors.subtitle }}</p>
     </div>
 
     <div class="doctors-container">
       <div class="doctors-grid">
         <a-card
-          v-for="doctor in allDoctors"
+          v-for="doctor in doctors"
           :key="doctor.id"
-          class="doctor-card"
-          :class="{ 'active': doctor.isActive }"
+          class="doctor-card active"
         >
           <div class="card-header">
-            <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge
-              :status="doctor.isActive ? 'processing' : 'default'"
-              :text="doctor.isActive ? '在线' : '离线'"
-            />
+            <img :src="defaultAvatar" :alt="doctor.name" class="doctor-avatar" />
+            <a-badge status="processing" :text="current.doctors.online" />
           </div>
           <div class="card-body">
             <h3>{{ doctor.name }}</h3>
             <p class="doctor-title">{{ doctor.title }}</p>
             <p class="doctor-department">{{ doctor.department }}</p>
-            <p class="doctor-experience">{{ doctor.experience }}</p>
+            <p class="doctor-experience">{{ doctor.hospital }}</p>
             <div class="doctor-specialties">
-              <a-tag v-for="specialty in doctor.specialties" :key="specialty" color="blue">
-                {{ specialty }}
-              </a-tag>
+              <a-tag color="blue">{{ doctor.specialty }}</a-tag>
             </div>
           </div>
           <div class="card-footer">
-            <a-button
-              type="primary"
-              block
-              :disabled="!doctor.isActive"
-              @click="goToConsultation(doctor)"
-            >
-              {{ doctor.isActive ? '进入诊室' : '暂未开放' }}
+            <a-button type="primary" block>
+              {{ current.doctors.enterRoom }}
             </a-button>
           </div>
         </a-card>
@@ -48,17 +37,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { store, Doctor } from '../store';
+import { onMounted, ref } from 'vue'
+import { useLocale } from '../locales'
 
-const router = useRouter();
+interface DoctorItem {
+  id: number
+  name: string
+  title: string
+  department: string
+  hospital: string
+  avatar: string
+  specialty: string
+}
 
-const allDoctors = computed(() => store.state.doctors);
+const { current } = useLocale()
+const doctors = ref<DoctorItem[]>([])
+const defaultAvatar = 'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=300'
 
-const goToConsultation = (doctor: Doctor) => {
-  router.push(`/consultation/${doctor.username}`);
-};
+const loadDoctors = async () => {
+  try {
+    const res = await fetch('http://localhost:8080/api/doctors')
+    doctors.value = await res.json()
+  } catch (error) {
+    console.error('Failed to load doctors:', error)
+  }
+}
+
+onMounted(() => {
+  loadDoctors()
+})
 </script>
 
 <style scoped>
