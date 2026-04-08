@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: qa-live-healthcare-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: qa_live_healthcare
+      MYSQL_USER: qa_user
+      MYSQL_PASSWORD: qa_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - qa-network
+    # 添加网络配置
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: qa-live-healthcare-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: qa_user
+      PMA_PASSWORD: qa_password
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - qa-network
+    restart: unless-stopped
+
+networks:
+  qa-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local

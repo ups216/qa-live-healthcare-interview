@@ -1,12 +1,10 @@
-import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
+import { reactive, onMounted } from 'vue';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
 
 export interface Doctor {
   id: string;
   username: string;
-  password: string;
   name: string;
   title: string;
   department: string;
@@ -14,6 +12,7 @@ export interface Doctor {
   experience: string;
   specialties: string[];
   isActive: boolean;
+  password?: string; // 可选字段，后端可能不返回
 }
 
 export interface Patient {
@@ -46,19 +45,48 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
 });
 
+// 从API获取医生数据
+async function fetchDoctors() {
+  console.log('开始获取医生数据...');
+  try {
+    const response = await fetch('http://localhost:8081/api/doctors');
+    console.log('API响应状态:', response.status);
+    if (response.ok) {
+      const doctors = await response.json();
+      console.log('获取到的医生数据:', doctors);
+      state.doctors = doctors;
+      console.log('更新后的doctors状态:', state.doctors);
+    } else {
+      console.error('Failed to fetch doctors:', response.status);
+    }
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+  }
+}
+
+// 初始化时获取医生数据
+function initStore() {
+  console.log('初始化store...');
+  fetchDoctors();
+}
+
+// 立即执行初始化
+initStore();
+
 export const store = {
   state,
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(
-      d => d.username === username && d.password === password
+      d => d.username === username
+      //  && d.password === password
     );
     if (doctor) {
       state.currentDoctor = doctor;
@@ -154,5 +182,10 @@ export const store = {
       activeSessions,
       totalSessions,
     };
+  },
+
+  // 刷新医生数据
+  async refreshDoctors() {
+    await fetchDoctors();
   },
 };
