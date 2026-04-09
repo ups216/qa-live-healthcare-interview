@@ -1,5 +1,4 @@
-import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
+import { reactive, ref } from 'vue';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
 
@@ -46,15 +45,47 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
 });
 
+const isLoading = ref(false);
+
+// 从后端 API 获取医生数据
+async function fetchDoctors() {
+  isLoading.value = true;
+  try {
+    const response = await fetch('http://localhost:8081/api/doctors');
+    if (response.ok) {
+      const doctors = await response.json();
+      // 转换数据格式，确保 isActive 字段存在
+      state.doctors = doctors.map((doctor: any) => ({
+        ...doctor,
+        isActive: doctor.active !== undefined ? doctor.active : doctor.isActive
+      }));
+    } else {
+      console.error('Failed to fetch doctors:', response.statusText);
+    }
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// 初始化时获取医生数据
+fetchDoctors();
+
 export const store = {
   state,
+  isLoading,
+
+  async refreshDoctors() {
+    await fetchDoctors();
+  },
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(
