@@ -1,29 +1,50 @@
 <template>
   <div class="home">
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+      <a-dropdown>
+        <a-button class="lang-btn">
+          <GlobalOutlined />
+          <span class="lang-label">{{ currentLocale === 'zh-CN' ? '中文' : 'English' }}</span>
+          <DownOutlined class="lang-arrow" />
+        </a-button>
+        <template #overlay>
+          <a-menu @click="handleLocaleChange">
+            <a-menu-item key="zh-CN">
+              <span :class="{ 'lang-active': currentLocale === 'zh-CN' }">🇨🇳 中文</span>
+            </a-menu-item>
+            <a-menu-item key="en-US">
+              <span :class="{ 'lang-active': currentLocale === 'en-US' }">🇺🇸 English</span>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
+
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ t.hero.title }}</h1>
+        <p class="hero-subtitle">{{ t.hero.subtitle }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ t.hero.features.professionalTeam }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ t.hero.features.realtimeConsultation }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ t.hero.features.privacyProtection }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ t.hero.actions.startConsultation }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ t.hero.actions.viewDoctors }}
           </a-button>
         </div>
       </div>
@@ -39,7 +60,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <p>{{ t.statistics.totalDoctors }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +69,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ t.statistics.totalQuestions }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +78,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ t.statistics.activeSessions }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -66,14 +87,14 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <p>{{ t.statistics.totalSessions }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ t.rooms.title }}</h2>
+      <p class="section-subtitle">{{ t.rooms.subtitle }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,7 +104,7 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="t.rooms.online" />
           </div>
           <div class="room-body">
             <h3>{{ doctor.name }}</h3>
@@ -96,7 +117,7 @@
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ t.rooms.enterRoom }}</a-button>
           </div>
         </div>
       </div>
@@ -113,10 +134,14 @@ import {
   TeamOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
-  UserOutlined
+  UserOutlined,
+  GlobalOutlined,
+  DownOutlined,
 } from '@ant-design/icons-vue';
+import { useLocale, type Locale } from '../locales';
 
 const router = useRouter();
+const { currentLocale, setLocale, t } = useLocale();
 
 const statistics = computed(() => store.getStatistics());
 const activeDoctors = computed(() => store.getActiveDoctors());
@@ -124,13 +149,61 @@ const activeDoctors = computed(() => store.getActiveDoctors());
 const navigateTo = (path: string) => {
   router.push(path);
 };
+
+const handleLocaleChange = ({ key }: { key: string }) => {
+  setLocale(key as Locale);
+};
 </script>
 
 <style scoped>
 .home {
   padding-top: 64px;
+  position: relative;
 }
 
+/* ── Language Switcher ── */
+.lang-switcher {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 1000;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 0 14px;
+  height: 36px;
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s;
+}
+
+.lang-btn:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.15);
+}
+
+.lang-label {
+  font-weight: 500;
+}
+
+.lang-arrow {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.lang-active {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+/* ── Hero ── */
 .hero {
   display: flex;
   align-items: center;
@@ -196,6 +269,7 @@ const navigateTo = (path: string) => {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* ── Statistics ── */
 .statistics {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 60px 24px;
@@ -261,6 +335,7 @@ const navigateTo = (path: string) => {
   margin: 4px 0 0;
 }
 
+/* ── Active Rooms ── */
 .active-rooms {
   max-width: 1200px;
   margin: 0 auto;
@@ -351,6 +426,7 @@ const navigateTo = (path: string) => {
   padding: 0 24px 24px;
 }
 
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .hero {
     flex-direction: column;
