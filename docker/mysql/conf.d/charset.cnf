@@ -1,0 +1,11 @@
+# Server + client default charset (fixes garbled Chinese from sessions / init scripts)
+[mysqld]
+character-set-server=utf8mb4
+collation-server=utf8mb4_0900_ai_ci
+init_connect='SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci'
+
+[mysql]
+default-character-set=utf8mb4
+
+[client]
+default-character-set=utf8mb4

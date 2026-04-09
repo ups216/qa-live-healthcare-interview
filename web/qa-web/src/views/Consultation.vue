@@ -1,67 +1,19 @@
 <template>
   <div class="consultation">
     <div class="consultation-container">
-      <div v-if="!currentPatient" class="auth-section">
-        <div class="auth-card">
-          <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
-          <a-form
-            :model="authForm"
-            :rules="authRules"
-            @finish="verifyPatient"
-            layout="vertical"
-          >
-            <a-form-item label="姓名" name="name">
-              <a-input
-                v-model:value="authForm.name"
-                size="large"
-                placeholder="请输入您的姓名"
-              >
-                <template #prefix>
-                  <UserOutlined />
-                </template>
-              </a-input>
-            </a-form-item>
-
-            <a-form-item label="生日" name="birthday">
-              <a-date-picker
-                v-model:value="authForm.birthday"
-                size="large"
-                format="YYYY-MM-DD"
-                placeholder="请选择您的生日"
-                style="width: 100%"
-              />
-            </a-form-item>
-
-            <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block>
-                验证身份
-              </a-button>
-            </a-form-item>
-          </a-form>
-
-          <a-alert
-            message="提示"
-            description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
-            type="info"
-            show-icon
-          />
-        </div>
-      </div>
-
-      <div v-else class="patient-portal">
+      <div class="patient-portal">
         <div class="portal-header">
           <div class="patient-info">
             <UserOutlined class="patient-icon-large" />
             <div>
-              <h1>{{ currentPatient.name }} 的问诊</h1>
+              <h1>{{ currentPatient!.name }} 的问诊</h1>
               <p>欢迎使用在线问诊服务</p>
             </div>
           </div>
           <div class="portal-actions">
             <a-button @click="logoutPatient">
               <LogoutOutlined />
-              切换用户
+              退出登录
             </a-button>
           </div>
         </div>
@@ -164,9 +116,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import {
   UserOutlined,
   LogoutOutlined,
@@ -175,6 +127,7 @@ import {
 import { store, Doctor } from '../store';
 
 const route = useRoute();
+const router = useRouter();
 
 const currentPatient = computed(() => store.state.currentPatient);
 const myQuestions = computed(() =>
@@ -184,16 +137,6 @@ const myQuestions = computed(() =>
 );
 
 const selectedDoctor = ref<Doctor | null>(null);
-
-const authForm = reactive({
-  name: '',
-  birthday: null as Dayjs | null,
-});
-
-const authRules = {
-  name: [{ required: true, message: '请输入姓名' }],
-  birthday: [{ required: true, message: '请选择生日' }],
-};
 
 const submitModalVisible = ref(false);
 const submitting = ref(false);
@@ -209,7 +152,8 @@ const availableDoctors = computed(() => {
     : store.getActiveDoctors();
 });
 
-onMounted(() => {
+onMounted(async () => {
+  await store.loadDoctors();
   const doctorUsername = route.params.doctorUsername as string;
   if (doctorUsername) {
     const doctor = store.getDoctorByUsername(doctorUsername);
@@ -220,30 +164,12 @@ onMounted(() => {
   }
 });
 
-const verifyPatient = () => {
-  const birthday = authForm.birthday?.format('YYYY-MM-DD');
-  if (!birthday) {
-    message.error('请选择生日');
-    return;
-  }
-
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
-
-  store.verifyPatient(authForm.name, birthday);
-
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
-  } else {
-    message.success('首次登录,已为您创建账户!');
-  }
-};
-
 const logoutPatient = () => {
+  const redirect = route.fullPath;
   store.logoutPatient();
   selectedDoctor.value = null;
-  message.success('已切换用户');
+  message.success('已退出登录');
+  router.push({ path: '/patient/login', query: { redirect } });
 };
 
 const clearSelectedDoctor = () => {
@@ -314,37 +240,6 @@ const formatTime = (time: string) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
-}
-
-.auth-section {
-  min-height: calc(100vh - 112px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.auth-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 48px;
-  width: 100%;
-  max-width: 450px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.auth-card h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.auth-card > p {
-  font-size: 16px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 32px;
 }
 
 .patient-portal {
@@ -462,11 +357,6 @@ const formatTime = (time: string) => {
 }
 
 @media (max-width: 768px) {
-  .auth-card {
-    margin: 24px;
-    padding: 32px 24px;
-  }
-
   .portal-header {
     flex-direction: column;
     gap: 16px;
