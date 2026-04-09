@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8
+    container_name: healthcare-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qa_healthcare
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: healthcare-pma
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+    restart: always
+
+volumes:
+  mysql-data:

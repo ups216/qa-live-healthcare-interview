@@ -8,25 +8,28 @@
       <a-menu v-model:selectedKeys="selectedKeys" mode="horizontal" class="nav-menu">
         <a-menu-item key="home" @click="navigateTo('/')">
           <HomeOutlined />
-          首页
+          {{ t.nav.home }}
         </a-menu-item>
         <a-menu-item key="consultation" @click="navigateTo('/consultation')">
           <MessageOutlined />
-          问诊
+          {{ t.nav.consultation }}
         </a-menu-item>
         <a-menu-item key="doctors" @click="navigateTo('/doctors')">
           <TeamOutlined />
-          医生
+          {{ t.nav.doctors }}
         </a-menu-item>
         <a-menu-item key="about" @click="navigateTo('/about')">
           <InfoCircleOutlined />
-          关于
+          {{ t.nav.about }}
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <LanguageSwitcher />
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          {{ t.nav.doctorLogin }}
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
@@ -35,10 +38,13 @@
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import LanguageSwitcher from './LanguageSwitcher.vue';
+import { useLanguage } from '../composables/useLanguage';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+const { t } = useLanguage();
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {

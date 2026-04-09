@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS `doctor` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '医生姓名',
+    `title` VARCHAR(100) DEFAULT NULL COMMENT '职称',
+    `hospital` VARCHAR(200) DEFAULT NULL COMMENT '医院名称',
+    `department` VARCHAR(100) DEFAULT NULL COMMENT '科室',
+    `avatar` VARCHAR(500) DEFAULT NULL COMMENT '头像 URL',
+    `intro` TEXT DEFAULT NULL COMMENT '简介',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    INDEX `idx_name` (`name`),
+    INDEX `idx_department` (`department`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医生信息表';
