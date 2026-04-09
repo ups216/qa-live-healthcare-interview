@@ -1,7 +1,17 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
-import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
+import { fetchDoctors } from '../api/doctors';
+import {
+  fetchCurrentPatient,
+  getPatientToken,
+  loginPatientApi,
+  registerPatientApi,
+  setPatientToken,
+  type RegisterPatientPayload,
+} from '../api/patients';
+import type { Patient } from '../types/patient';
+
+export type { Patient };
 
 export interface Doctor {
   id: string;
@@ -14,14 +24,6 @@ export interface Doctor {
   experience: string;
   specialties: string[];
   isActive: boolean;
-}
-
-export interface Patient {
-  id: string;
-  name: string;
-  birthday: string;
-  phone: string;
-  gender: string;
 }
 
 export interface Question {
@@ -39,15 +41,13 @@ export interface Question {
 
 interface State {
   doctors: Doctor[];
-  patients: Patient[];
   questions: Question[];
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
-  patients: patientData as Patient[],
+  doctors: [],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
@@ -55,6 +55,11 @@ const state = reactive<State>({
 
 export const store = {
   state,
+
+  async loadDoctors(force = false) {
+    if (!force && state.doctors.length > 0) return;
+    state.doctors = await fetchDoctors();
+  },
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(
@@ -71,28 +76,38 @@ export const store = {
     state.currentDoctor = null;
   },
 
-  verifyPatient(name: string, birthday: string): Patient {
-    let patient = state.patients.find(
-      p => p.name === name && p.birthday === birthday
-    );
+  async loginPatient(username: string, password: string): Promise<void> {
+    const res = await loginPatientApi(username, password);
+    setPatientToken(res.token);
+    state.currentPatient = res.patient;
+  },
 
-    if (!patient) {
-      patient = {
-        id: `patient${Date.now()}`,
-        name,
-        birthday,
-        phone: '',
-        gender: '',
-      };
-      state.patients.push(patient);
-    }
-
-    state.currentPatient = patient;
-    return patient;
+  async registerPatient(payload: RegisterPatientPayload): Promise<void> {
+    const res = await registerPatientApi(payload);
+    setPatientToken(res.token);
+    state.currentPatient = res.patient;
   },
 
   logoutPatient() {
+    setPatientToken(null);
     state.currentPatient = null;
+  },
+
+  /**
+   * Restores patient from JWT in localStorage (e.g. after full page refresh).
+   */
+  async initPatientSession(): Promise<void> {
+    const token = getPatientToken();
+    if (!token) {
+      state.currentPatient = null;
+      return;
+    }
+    try {
+      state.currentPatient = await fetchCurrentPatient(token);
+    } catch {
+      setPatientToken(null);
+      state.currentPatient = null;
+    }
   },
 
   getQuestionsByDoctor(doctorId: string): Question[] {
@@ -103,7 +118,9 @@ export const store = {
     return state.questions.filter(q => q.patientId === patientId);
   },
 
-  addQuestion(question: Omit<Question, 'id' | 'submitTime' | 'status' | 'answer' | 'answerTime'>): Question {
+  addQuestion(
+    question: Omit<Question, 'id' | 'submitTime' | 'status' | 'answer' | 'answerTime'>
+  ): Question {
     const newQuestion: Question = {
       ...question,
       id: `q${Date.now()}`,
@@ -117,20 +134,20 @@ export const store = {
   },
 
   answerQuestion(questionId: string, answer: string) {
-    const question = state.questions.find(q => q.id === questionId);
-    if (question) {
-      question.status = 'answered';
-      question.answer = answer;
-      question.answerTime = new Date().toISOString();
+    const q = state.questions.find(x => x.id === questionId);
+    if (q) {
+      q.status = 'answered';
+      q.answer = answer;
+      q.answerTime = new Date().toISOString();
     }
   },
 
   markQuestionAsAnswered(questionId: string) {
-    const question = state.questions.find(q => q.id === questionId);
-    if (question) {
-      question.status = 'answered';
-      question.answer = '已口述解答';
-      question.answerTime = new Date().toISOString();
+    const q = state.questions.find(x => x.id === questionId);
+    if (q) {
+      q.status = 'answered';
+      q.answer = '已口述解答';
+      q.answerTime = new Date().toISOString();
     }
   },
 
@@ -147,7 +164,6 @@ export const store = {
     const totalQuestions = state.questions.length;
     const activeSessions = state.questions.filter(q => q.status === 'pending').length;
     const totalSessions = state.doctors.filter(d => d.isActive).length;
-
     return {
       totalDoctors,
       totalQuestions,

@@ -2,28 +2,28 @@
   <div class="home">
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ t('home.heroTitle') }}</h1>
+        <p class="hero-subtitle">{{ t('home.heroSubtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ t('home.featureTeam') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ t('home.featureRealtime') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ t('home.featurePrivacy') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ t('home.ctaConsultNow') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ t('home.ctaViewDoctors') }}
           </a-button>
         </div>
       </div>
@@ -39,7 +39,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <p>{{ t('home.statDoctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +48,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ t('home.statQuestions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +57,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ t('home.statPending') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -66,14 +66,14 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <p>{{ t('home.statRooms') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ t('home.activeRoomsTitle') }}</h2>
+      <p class="section-subtitle">{{ t('home.activeRoomsSubtitle') }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,20 +83,20 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="t('home.badgeOnline')" />
           </div>
           <div class="room-body">
             <h3>{{ doctor.name }}</h3>
-            <p class="doctor-title">{{ doctor.title }} · {{ doctor.department }}</p>
-            <p class="doctor-experience">{{ doctor.experience }}</p>
+            <p class="doctor-title">{{ doctorTitle(doctor.title) }} · {{ doctorDepartment(doctor.department) }}</p>
+            <p class="doctor-experience">{{ doctorExperience(doctor.experience) }}</p>
             <div class="doctor-specialties">
               <a-tag v-for="specialty in doctor.specialties" :key="specialty" color="blue">
-                {{ specialty }}
+                {{ doctorSpecialty(specialty) }}
               </a-tag>
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ t('home.enterRoom') }}</a-button>
           </div>
         </div>
       </div>
@@ -105,9 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { store } from '../store';
+import { useI18n } from '../locales/i18n';
 import {
   CheckCircleOutlined,
   TeamOutlined,
@@ -117,9 +118,70 @@ import {
 } from '@ant-design/icons-vue';
 
 const router = useRouter();
+const { t, locale } = useI18n();
+
+const titleEnMap: Record<string, string> = {
+  '主任医师': 'Chief Physician',
+  '副主任医师': 'Associate Chief Physician',
+  '主治医师': 'Attending Physician'
+};
+
+const departmentEnMap: Record<string, string> = {
+  '心内科': 'Cardiology',
+  '儿科': 'Pediatrics',
+  '骨科': 'Orthopedics',
+  '妇产科': 'Obstetrics & Gynecology',
+  '消化内科': 'Gastroenterology'
+};
+
+const specialtyEnMap: Record<string, string> = {
+  '高血压': 'Hypertension',
+  '冠心病': 'Coronary artery disease',
+  '心律失常': 'Arrhythmia',
+  '儿童感冒': 'Common cold (children)',
+  '儿童发育': 'Child development',
+  '疫苗接种': 'Vaccination',
+  '骨折': 'Fracture',
+  '关节炎': 'Arthritis',
+  '运动损伤': 'Sports injury',
+  '孕期保健': 'Prenatal care',
+  '妇科炎症': 'Gynecological inflammation',
+  '产后恢复': 'Postpartum recovery',
+  '胃炎': 'Gastritis',
+  '肠道疾病': 'Intestinal disorders',
+  '肝病': 'Liver disease'
+};
+
+function doctorTitle(title: string) {
+  if (locale.value !== 'en-US') return title;
+  return titleEnMap[title] ?? title;
+}
+
+function doctorDepartment(department: string) {
+  if (locale.value !== 'en-US') return department;
+  return departmentEnMap[department] ?? department;
+}
+
+function doctorSpecialty(specialty: string) {
+  if (locale.value !== 'en-US') return specialty;
+  return specialtyEnMap[specialty] ?? specialty;
+}
+
+function doctorExperience(experience: string) {
+  if (locale.value !== 'en-US') return experience;
+  const m = experience.match(/(\d+)\s*年/);
+  if (!m) return experience;
+  const years = Number(m[1]);
+  if (Number.isNaN(years)) return experience;
+  return `${years} years of clinical experience`;
+}
 
 const statistics = computed(() => store.getStatistics());
 const activeDoctors = computed(() => store.getActiveDoctors());
+
+onMounted(async () => {
+  await store.loadDoctors();
+});
 
 const navigateTo = (path: string) => {
   router.push(path);

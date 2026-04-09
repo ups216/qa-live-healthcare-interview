@@ -77,7 +77,8 @@ const rules = {
 const onFinish = async () => {
   loading.value = true;
 
-  setTimeout(() => {
+  try {
+    await store.loadDoctors();
     const doctor = store.loginDoctor(formState.username, formState.password);
 
     if (doctor) {
@@ -86,9 +87,9 @@ const onFinish = async () => {
     } else {
       message.error('用户名或密码错误');
     }
-
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 </script>
 

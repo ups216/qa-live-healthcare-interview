@@ -23,10 +23,29 @@
           关于
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <a-dropdown placement="bottomRight" :trigger="['click']">
+          <a-button class="lang-btn">
+            <GlobalOutlined />
+            {{ localeLabel }}
+          </a-button>
+          <template #overlay>
+            <a-menu @click="onLocaleMenuClick">
+              <a-menu-item key="zh-CN">中文</a-menu-item>
+              <a-menu-item key="en-US">English</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+
+        <a-button @click="navigateTo('/patient/login')">
+          <UserOutlined />
+          患者登录
+        </a-button>
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          医生登录
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
@@ -34,11 +53,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined, GlobalOutlined } from '@ant-design/icons-vue';
+import { useI18n, type Locale } from '../locales/i18n';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+const { setLocale, localeLabel } = useI18n();
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -49,11 +70,17 @@ watch(() => route.path, (newPath) => {
     selectedKeys.value = ['doctors'];
   } else if (newPath.startsWith('/about')) {
     selectedKeys.value = ['about'];
+  } else if (newPath.startsWith('/patient/login')) {
+    selectedKeys.value = [];
   }
 }, { immediate: true });
 
 const navigateTo = (path: string) => {
   router.push(path);
+};
+
+const onLocaleMenuClick = (info: { key: string }) => {
+  setLocale(info.key as Locale);
 };
 </script>
 
@@ -77,6 +104,7 @@ const navigateTo = (path: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   height: 100%;
   padding: 0 24px;
 }
@@ -103,9 +131,24 @@ const navigateTo = (path: string) => {
 
 .nav-menu {
   flex: 1;
+  min-width: 0;
   border: none;
   margin: 0 40px;
   line-height: 64px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .login-btn {
