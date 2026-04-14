@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "QA Live Healthcare",
+    "home": "首页",
+    "consultation": "问诊",
+    "doctors": "医生",
+    "about": "关于",
+    "doctorLogin": "医生登录",
+    "language": "语言",
+    "chinese": "中文",
+    "english": "English",
+    "logout": "退出登录"
+  },
+  "home": {
+    "title": "专业在线医疗问诊平台",
+    "subtitle": "连接专业医生与患者，提供便捷、高效的医疗咨询服务",
+    "features": {
+      "team": "专业医生团队",
+      "realtime": "实时在线问诊",
+      "privacy": "隐私安全保护"
+    },
+    "startConsultation": "立即问诊",
+    "viewDoctors": "查看医生",
+    "statistics": {
+      "doctors": "专业医生",
+      "questions": "问题总数",
+      "activeSessions": "待响应问题",
+      "sessions": "在线诊室"
+    },
+    "openRooms": "开放诊室",
+    "roomsSubtitle": "以下医生诊室正在开放，欢迎咨询",
+    "enterRoom": "进入诊室",
+    "online": "在线"
+  },
+  "doctor": {
+    "specialties": {
+      "general": "全科",
+      "pediatrics": "儿科",
+      "internal": "内科",
+      "surgery": "外科",
+      "gynecology": "妇科",
+      "emergency": "急诊科",
+      "心内科": "心内科",
+      "骨科": "骨科",
+      "妇产科": "妇产科",
+      "消化内科": "消化内科"
+    }
+  }
+}

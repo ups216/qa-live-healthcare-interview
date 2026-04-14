@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "QA Live Healthcare",
+    "home": "Home",
+    "consultation": "Consultation",
+    "doctors": "Doctors",
+    "about": "About",
+    "doctorLogin": "Doctor Login",
+    "language": "Language",
+    "chinese": "中文",
+    "english": "English",
+    "logout": "Logout"
+  },
+  "home": {
+    "title": "Professional Online Medical Consultation Platform",
+    "subtitle": "Connecting professional doctors and patients, providing convenient and efficient medical consultation services",
+    "features": {
+      "team": "Professional Doctor Team",
+      "realtime": "Real-time Online Consultation",
+      "privacy": "Privacy and Security Protection"
+    },
+    "startConsultation": "Start Consultation",
+    "viewDoctors": "View Doctors",
+    "statistics": {
+      "doctors": "Professional Doctors",
+      "questions": "Total Questions",
+      "activeSessions": "Pending Questions",
+      "sessions": "Online Rooms"
+    },
+    "openRooms": "Open Consultation Rooms",
+    "roomsSubtitle": "The following doctor rooms are currently open, welcome to consult",
+    "enterRoom": "Enter Room",
+    "online": "Online"
+  },
+  "doctor": {
+    "specialties": {
+      "general": "General Practice",
+      "pediatrics": "Pediatrics",
+      "internal": "Internal Medicine",
+      "surgery": "Surgery",
+      "gynecology": "Gynecology",
+      "emergency": "Emergency Department",
+      "心内科": "Cardiology",
+      "骨科": "Orthopedics",
+      "妇产科": "Obstetrics and Gynecology",
+      "消化内科": "Gastroenterology"
+    }
+  }
+}

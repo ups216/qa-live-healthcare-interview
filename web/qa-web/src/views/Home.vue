@@ -2,28 +2,28 @@
   <div class="home">
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ t('home.title') }}</h1>
+        <p class="hero-subtitle">{{ t('home.subtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ t('home.features.team') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ t('home.features.realtime') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ t('home.features.privacy') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ t('home.startConsultation') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ t('home.viewDoctors') }}
           </a-button>
         </div>
       </div>
@@ -39,7 +39,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <p>{{ t('home.statistics.doctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +48,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ t('home.statistics.questions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +57,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ t('home.statistics.activeSessions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -66,14 +66,14 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <p>{{ t('home.statistics.sessions') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ t('home.openRooms') }}</h2>
+      <p class="section-subtitle">{{ t('home.roomsSubtitle') }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,11 +83,11 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="t('home.online')" />
           </div>
           <div class="room-body">
             <h3>{{ doctor.name }}</h3>
-            <p class="doctor-title">{{ doctor.title }} · {{ doctor.department }}</p>
+            <p class="doctor-title">{{ formatDoctorTitleWrapper(doctor) }}</p>
             <p class="doctor-experience">{{ doctor.experience }}</p>
             <div class="doctor-specialties">
               <a-tag v-for="specialty in doctor.specialties" :key="specialty" color="blue">
@@ -96,7 +96,7 @@
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ t('home.enterRoom') }}</a-button>
           </div>
         </div>
       </div>
@@ -105,9 +105,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { store } from '../store';
+import { store, type Doctor } from '../store';
+import { formatDoctorTitle } from '../locales';
+import { useLocale } from '../hooks/useLocale';
 import {
   CheckCircleOutlined,
   TeamOutlined,
@@ -117,12 +119,32 @@ import {
 } from '@ant-design/icons-vue';
 
 const router = useRouter();
+const { currentLocale, t } = useLocale();
 
-const statistics = computed(() => store.getStatistics());
-const activeDoctors = computed(() => store.getActiveDoctors());
+// 响应式数据
+const statistics = ref<any>({ totalDoctors: 0, totalQuestions: 0, activeSessions: 0, totalSessions: 0 });
+const activeDoctors = ref<Doctor[]>([]);
+const isLoading = ref(true);
+
+// 初始化数据
+onMounted(async () => {
+  // 初始化医生数据
+  await store.init();
+  activeDoctors.value = store.getActiveDoctors();
+  
+  // 获取统计数据
+  const stats = await store.getStatistics();
+  statistics.value = stats;
+  
+  isLoading.value = false;
+});
 
 const navigateTo = (path: string) => {
   router.push(path);
+};
+
+const formatDoctorTitleWrapper = (doctor: any) => {
+  return formatDoctorTitle(doctor, currentLocale.value);
 };
 </script>
 

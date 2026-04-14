@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医疗健康咨询平台 - 运行演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .demo-header {
+            background: linear-gradient(to right, #4c6ef5, #228be6);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .demo-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .demo-content {
+            padding: 40px;
+        }
+        
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .status-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #4c6ef5;
+        }
+        
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4c6ef5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .status-text {
+            flex: 1;
+        }
+        
+        .status-text h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+        
+        .status-text p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #4c6ef5, #228be6);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(76, 110, 245, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e9ecef;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .code-line {
+            margin-bottom: 5px;
+        }
+        
+        .code-comment {
+            color: #6a9955;
+        }
+        
+        .code-command {
+            color: #dcdcaa;
+        }
+        
+        .demo-footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .success {
+            border-left-color: #40c057;
+        }
+        
+        .success .status-icon {
+            background: #40c057;
+        }
+        
+        .warning {
+            border-left-color: #fab005;
+        }
+        
+        .warning .status-icon {
+            background: #fab005;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>医疗健康咨询平台</h1>
+            <p>项目运行演示</p>
+        </div>
+        
+        <div class="demo-content">
+            <div class="status-section">
+                <h2>项目状态</h2>
+                
+                <div class="status-item success">
+                    <div class="status-icon">✓</div>
+                    <div class="status-text">
+                        <h3>Node.js 已安装</h3>
+                        <p>Node.js 环境已就绪，可以运行项目</p>
+                    </div>
+                </div>
+                
+                <div class="status-item warning">
+                    <div class="status-icon">!</div>
+                    <div class="status-text">
+                        <h3>依赖未安装</h3>
+                        <p>需要安装项目依赖才能启动开发服务器</p>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-icon">2</div>
+                    <div class="status-text">
+                        <h3>开发服务器未启动</h3>
+                        <p>需要启动 Vite 开发服务器</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="code-block">
+                <div class="code-line"><span class="code-comment"># 请按照以下步骤运行项目：</span></div>
+                <div class="code-line">&nbsp;</div>
+                <div class="code-line"><span class="code-comment"># 1. 打开终端或命令提示符</span></div>
+                <div class="code-line"><span class="code-comment"># 2. 切换到项目目录：</span></div>
+                <div class="code-line"><span class="code-command">cd d:/code/qa-live-healthcare-interview/web/qa-web</span></div>
+                <div class="code-line">&nbsp;</div>
+                <div class="code-line"><span class="code-comment"># 3. 安装依赖（如果未安装）：</span></div>
+                <div class="code-line"><span class="code-command">npm install</span></div>
+                <div class="code-line">&nbsp;</div>
+                <div class="code-line"><span class="code-comment"># 4. 启动开发服务器：</span></div>
+                <div class="code-line"><span class="code-command">npm run dev</span></div>
+                <div class="code-line">&nbsp;</div>
+                <div class="code-line"><span class="code-comment"># 5. 在浏览器中访问：</span></div>
+                <div class="code-line"><span class="code-command">http://localhost:5173</span></div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="http://localhost:5173" class="btn btn-primary" target="_blank">访问项目 (如果已启动)</a>
+                <button class="btn btn-secondary" onclick="showManual()">查看手动启动指南</button>
+            </div>
+        </div>
+        
+        <div class="demo-footer">
+            <p>项目路径: d:/code/qa-live-healthcare-interview/web/qa-web/</p>
+            <p>技术栈: Vue 3 + TypeScript + Vite + Ant Design Vue</p>
+        </div>
+    </div>
+    
+    <script>
+        function showManual() {
+            alert('手动启动步骤：\n\n1. 打开终端/命令提示符\n2. cd d:/code/qa-live-healthcare-interview/web/qa-web\n3. npm install\n4. npm run dev\n5. 访问 http://localhost:5173');
+        }
+        
+        // 尝试检测开发服务器是否运行
+        setTimeout(() => {
+            fetch('http://localhost:5173')
+                .then(response => {
+                    if (response.ok) {
+                        document.querySelector('.status-item:nth-child(3)').classList.add('success');
+                        document.querySelector('.status-item:nth-child(3) .status-icon').textContent = '✓';
+                        document.querySelector('.status-item:nth-child(3) h3').textContent = '开发服务器正在运行';
+                        document.querySelector('.status-item:nth-child(3) p').textContent = 'Vite 开发服务器已在端口 5173 启动';
+                    }
+                })
+                .catch(() => {
+                    // 服务器未运行，保持现状
+                });
+        }, 1000);
+    </script>
+</body>
+</html>

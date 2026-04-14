@@ -6,7 +6,25 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <!-- 加载状态 -->
+      <div v-if="isLoading" class="loading-container">
+        <a-spin size="large" tip="加载医生数据中..." />
+      </div>
+      
+      <!-- 数据为空状态 -->
+      <div v-else-if="allDoctors.length === 0" class="empty-container">
+        <a-empty description="暂无医生数据">
+          <template #description>
+            <div>无法加载医生列表，请检查后端服务是否运行</div>
+            <div style="margin-top: 8px; font-size: 12px; color: #999;">
+              后端API地址: http://localhost:8080/api/doctors/active
+            </div>
+          </template>
+        </a-empty>
+      </div>
+      
+      <!-- 医生网格 -->
+      <div v-else class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -48,13 +66,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
+const isLoading = ref(false);
 
 const allDoctors = computed(() => store.state.doctors);
+
+onMounted(async () => {
+  if (store.state.doctors.length === 0) {
+    isLoading.value = true;
+    try {
+      await store.init();
+      console.log('医生数据加载完成:', store.state.doctors.length, '位医生');
+    } catch (error) {
+      console.error('加载医生数据失败:', error);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+});
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
@@ -159,6 +192,21 @@ const goToConsultation = (doctor: Doctor) => {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  text-align: center;
 }
 
 @media (max-width: 768px) {

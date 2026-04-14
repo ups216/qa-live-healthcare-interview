@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>医生API接口测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; background: #f5f5f5; border-radius: 8px; }
+        .endpoint { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #1890ff; }
+        .method { display: inline-block; padding: 4px 8px; background: #1890ff; color: white; border-radius: 4px; font-size: 12px; }
+        .url { font-family: monospace; color: #333; margin: 10px 0; }
+        .test-btn { padding: 8px 16px; background: #52c41a; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .test-btn:hover { background: #73d13d; }
+        .result { margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; max-height: 200px; overflow-y: auto; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>医生API接口测试</h1>
+    
+    <div class="section">
+        <h2>API接口说明</h2>
+        <p>以下API接口已实现，用于替代原来的JSON文件数据源：</p>
+        
+        <div class="endpoint">
+            <div class="method">GET</div>
+            <div class="url">http://localhost:8080/api/doctors/active</div>
+            <p>获取所有活跃医生列表（与原来JSON格式相同）</p>
+            <button class="test-btn" onclick="testActiveDoctors()">测试接口</button>
+            <div class="result" id="result-active"></div>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET</div>
+            <div class="url">http://localhost:8080/api/doctors</div>
+            <p>获取所有医生列表（包括非活跃）</p>
+            <button class="test-btn" onclick="testAllDoctors()">测试接口</button>
+            <div class="result" id="result-all"></div>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET</div>
+            <div class="url">http://localhost:8080/api/doctors/statistics</div>
+            <p>获取医生统计信息</p>
+            <button class="test-btn" onclick="testStatistics()">测试接口</button>
+            <div class="result" id="result-stats"></div>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET</div>
+            <div class="url">http://localhost:8080/api/doctors/{id}</div>
+            <p>根据ID获取医生详情</p>
+            <input type="text" id="doctorId" placeholder="输入医生ID，如：doc001" style="padding: 5px; width: 200px;">
+            <button class="test-btn" onclick="testDoctorById()">测试接口</button>
+            <div class="result" id="result-by-id"></div>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET</div>
+            <div class="url">http://localhost:8080/api/doctors/username/{username}</div>
+            <p>根据用户名获取医生详情</p>
+            <input type="text" id="username" placeholder="输入用户名，如：dr-zhang-wei" style="padding: 5px; width: 200px;">
+            <button class="test-btn" onclick="testDoctorByUsername()">测试接口</button>
+            <div class="result" id="result-by-username"></div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>前端更新说明</h2>
+        <p>前端需要修改以下位置，从原来的JSON文件改为调用API：</p>
+        <ol>
+            <li>修改 <code>src/store/index.ts</code> 中的 <code>getActiveDoctors()</code> 方法</li>
+            <li>修改 <code>src/store/index.ts</code> 中的 <code>getStatistics()</code> 方法</li>
+            <li>修改 <code>src/store/index.ts</code> 中的 <code>getDoctorByUsername()</code> 方法</li>
+            <li>更新所有相关组件的导入方式</li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h2>数据库配置</h2>
+        <p>已创建完整的MySQL数据库配置：</p>
+        <ul>
+            <li><strong>数据库文件</strong>: <code>docker-compose.yml</code> - 包含MySQL和phpMyAdmin配置</li>
+            <li><strong>表结构脚本</strong>: <code>init-scripts/01-create-tables.sql</code></li>
+            <li><strong>初始数据</strong>: <code>init-scripts/02-insert-initial-data.sql</code></li>
+            <li><strong>视图和存储过程</strong>: <code>init-scripts/03-create-views.sql</code> 和 <code>04-create-procedures.sql</code></li>
+        </ul>
+        <p>目前使用H2内存数据库进行开发和测试，可以无缝切换到MySQL。</p>
+    </div>
+    
+    <script>
+        function testActiveDoctors() {
+            fetch('http://localhost:8080/api/doctors/active')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result-active').innerHTML = 
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    document.getElementById('result-active').innerHTML = 
+                        '错误: ' + error.message + '<br>请确保后端服务已启动 (http://localhost:8080)';
+                });
+        }
+        
+        function testAllDoctors() {
+            fetch('http://localhost:8080/api/doctors')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result-all').innerHTML = 
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    document.getElementById('result-all').innerHTML = 
+                        '错误: ' + error.message + '<br>请确保后端服务已启动 (http://localhost:8080)';
+                });
+        }
+        
+        function testStatistics() {
+            fetch('http://localhost:8080/api/doctors/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result-stats').innerHTML = 
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    document.getElementById('result-stats').innerHTML = 
+                        '错误: ' + error.message + '<br>请确保后端服务已启动 (http://localhost:8080)';
+                });
+        }
+        
+        function testDoctorById() {
+            const id = document.getElementById('doctorId').value;
+            if (!id) {
+                alert('请输入医生ID');
+                return;
+            }
+            fetch(`http://localhost:8080/api/doctors/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result-by-id').innerHTML = 
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    document.getElementById('result-by-id').innerHTML = 
+                        '错误: ' + error.message + '<br>请确保后端服务已启动 (http://localhost:8080)';
+                });
+        }
+        
+        function testDoctorByUsername() {
+            const username = document.getElementById('username').value;
+            if (!username) {
+                alert('请输入用户名');
+                return;
+            }
+            fetch(`http://localhost:8080/api/doctors/username/${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result-by-username').innerHTML = 
+                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    document.getElementById('result-by-username').innerHTML = 
+                        '错误: ' + error.message + '<br>请确保后端服务已启动 (http://localhost:8080)';
+                });
+        }
+    </script>
+</body>
+</html>

@@ -3,30 +3,33 @@
     <div class="header-content">
       <div class="logo">
         <img src="https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg?auto=compress&cs=tinysrgb&w=100" alt="QA Live Healthcare" />
-        <span>QA Live Healthcare</span>
+        <span>{{ t('common.appName') }}</span>
       </div>
       <a-menu v-model:selectedKeys="selectedKeys" mode="horizontal" class="nav-menu">
         <a-menu-item key="home" @click="navigateTo('/')">
           <HomeOutlined />
-          首页
+          {{ t('common.home') }}
         </a-menu-item>
         <a-menu-item key="consultation" @click="navigateTo('/consultation')">
           <MessageOutlined />
-          问诊
+          {{ t('common.consultation') }}
         </a-menu-item>
         <a-menu-item key="doctors" @click="navigateTo('/doctors')">
           <TeamOutlined />
-          医生
+          {{ t('common.doctors') }}
         </a-menu-item>
         <a-menu-item key="about" @click="navigateTo('/about')">
           <InfoCircleOutlined />
-          关于
+          {{ t('common.about') }}
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <LanguageSwitcher />
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          {{ t('common.doctorLogin') }}
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
@@ -35,10 +38,13 @@
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import LanguageSwitcher from './LanguageSwitcher.vue';
+import { useLocale } from '../hooks/useLocale';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+const { t } = useLocale();
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -106,6 +112,12 @@ const navigateTo = (path: string) => {
   border: none;
   margin: 0 40px;
   line-height: 64px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .login-btn {
