@@ -8,37 +8,66 @@
       <a-menu v-model:selectedKeys="selectedKeys" mode="horizontal" class="nav-menu">
         <a-menu-item key="home" @click="navigateTo('/')">
           <HomeOutlined />
-          首页
+          {{ $t('header.home') }}
         </a-menu-item>
         <a-menu-item key="consultation" @click="navigateTo('/consultation')">
           <MessageOutlined />
-          问诊
+          {{ $t('header.consultation') }}
         </a-menu-item>
         <a-menu-item key="doctors" @click="navigateTo('/doctors')">
           <TeamOutlined />
-          医生
+          {{ $t('header.doctors') }}
         </a-menu-item>
         <a-menu-item key="about" @click="navigateTo('/about')">
           <InfoCircleOutlined />
-          关于
+          {{ $t('header.about') }}
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <a-dropdown>
+          <a-button type="text" class="lang-btn">
+            <GlobalOutlined />
+            {{ currentLocaleLabel }}
+          </a-button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item key="zh-CN" @click="switchLanguage('zh-CN')">
+                {{ $t('language.chinese') }}
+              </a-menu-item>
+              <a-menu-item key="en-US" @click="switchLanguage('en-US')">
+                {{ $t('language.english') }}
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          {{ $t('header.doctorLogin') }}
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { useI18n } from 'vue-i18n';
+import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined, GlobalOutlined } from '@ant-design/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
+const { locale } = useI18n();
 const selectedKeys = ref<string[]>(['home']);
+
+const currentLocaleLabel = computed(() => {
+  return locale.value === 'zh-CN' ? '中文' : 'English';
+});
+
+const switchLanguage = (lang: string) => {
+  locale.value = lang;
+  localStorage.setItem('locale', lang);
+};
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -116,5 +145,22 @@ const navigateTo = (path: string) => {
 .login-btn:hover {
   background: #73d13d;
   border-color: #73d13d;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #333;
+}
+
+.lang-btn:hover {
+  color: #1890ff;
 }
 </style>

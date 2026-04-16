@@ -1,0 +1,50 @@
+{
+  "header": {
+    "home": "Home",
+    "consultation": "Consultation",
+    "doctors": "Doctors",
+    "about": "About",
+    "doctorLogin": "Doctor Login"
+  },
+  "home": {
+    "heroTitle": "Professional Online Healthcare Platform",
+    "heroSubtitle": "Connect with professional doctors and patients for convenient, efficient medical consultation services",
+    "professionalDoctors": "Professional Doctor Team",
+    "realtimeConsultation": "Real-time Online Consultation",
+    "privacyProtection": "Privacy & Security Protection",
+    "startConsultation": "Start Consultation",
+    "viewDoctors": "View Doctors",
+    "professionalDoctorsStat": "Professional Doctors",
+    "totalQuestions": "Total Questions",
+    "pendingQuestions": "Pending Questions",
+    "onlineRooms": "Online Rooms",
+    "openRooms": "Open Rooms",
+    "roomsSubtitle": "The following doctor rooms are open for consultation",
+    "online": "Online",
+    "enterRoom": "Enter Room"
+  },
+  "footer": {
+    "title": "QA Live Healthcare",
+    "subtitle": "Professional Online Healthcare Platform",
+    "description": "Providing you with convenient and professional medical consultation services",
+    "quickLinks": "Quick Links",
+    "home": "Home",
+    "consultation": "Consultation",
+    "doctors": "Doctors",
+    "about": "About Us",
+    "contactUs": "Contact Us",
+    "serviceHotline": "Service Hotline: 400-123-4567",
+    "serviceHours": "Service Hours: Monday to Sunday 8:00-22:00",
+    "email": "Email: service@qalive.com",
+    "legalInfo": "Legal Information",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "medicalDisclaimer": "Medical Disclaimer",
+    "copyright": "© 2025 QA Live Healthcare. All rights reserved."
+  },
+  "language": {
+    "switchLanguage": "Switch Language",
+    "chinese": "中文",
+    "english": "English"
+  }
+}
