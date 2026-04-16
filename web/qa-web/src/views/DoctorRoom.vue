@@ -5,8 +5,8 @@
         <div class="doctor-info">
           <img :src="currentDoctor.avatar" :alt="currentDoctor.name" class="doctor-avatar" />
           <div>
-            <h1>{{ currentDoctor.name }}的诊室</h1>
-            <p>{{ currentDoctor.title }} · {{ currentDoctor.department }}</p>
+            <h1>{{ currentDoctor.name }} 的诊室</h1>
+            <p>{{ currentDoctor.title }} / {{ currentDoctor.department }}</p>
           </div>
         </div>
         <div class="room-actions">
@@ -22,30 +22,22 @@
       </div>
 
       <div class="room-url">
-        <a-alert
-          :message="`诊室URL: ${roomUrl}`"
-          type="success"
-          show-icon
-        />
+        <a-alert :message="`诊室地址：${roomUrl}`" type="success" show-icon />
       </div>
 
       <div class="questions-section">
         <div class="section-header">
-          <h2>待响应问题 ({{ pendingQuestions.length }})</h2>
+          <h2>待回复问题（{{ pendingQuestions.length }}）</h2>
           <a-button type="primary" @click="refreshQuestions">
             <ReloadOutlined />
             刷新
           </a-button>
         </div>
 
-        <a-empty v-if="pendingQuestions.length === 0" description="暂无待响应问题" />
+        <a-empty v-if="pendingQuestions.length === 0" description="暂无待回复问题" />
 
         <div v-else class="questions-list">
-          <div
-            v-for="question in pendingQuestions"
-            :key="question.id"
-            class="question-card"
-          >
+          <div v-for="question in pendingQuestions" :key="question.id" class="question-card">
             <div class="question-header">
               <div class="patient-info">
                 <UserOutlined class="patient-icon" />
@@ -63,7 +55,7 @@
               </a-button>
               <a-button @click="markAsAnswered(question.id)">
                 <CheckOutlined />
-                标记已解答
+                标记已答
               </a-button>
             </div>
           </div>
@@ -71,7 +63,7 @@
       </div>
 
       <div class="answered-section">
-        <h2>已解答问题 ({{ answeredQuestions.length }})</h2>
+        <h2>已回复问题（{{ answeredQuestions.length }}）</h2>
         <a-collapse v-if="answeredQuestions.length > 0" accordion>
           <a-collapse-panel
             v-for="question in answeredQuestions"
@@ -79,13 +71,13 @@
             :header="`${question.patientName}: ${question.question.substring(0, 50)}...`"
           >
             <div class="answered-content">
-              <p class="question-text"><strong>问题:</strong> {{ question.question }}</p>
-              <p class="answer-text"><strong>回复:</strong> {{ question.answer }}</p>
-              <p class="answer-time">回复时间: {{ formatTime(question.answerTime!) }}</p>
+              <p class="question-text"><strong>问题：</strong>{{ question.question }}</p>
+              <p class="answer-text"><strong>回复：</strong>{{ question.answer }}</p>
+              <p class="answer-time">回复时间：{{ formatTime(question.answerTime!) }}</p>
             </div>
           </a-collapse-panel>
         </a-collapse>
-        <a-empty v-else description="暂无已解答问题" />
+        <a-empty v-else description="暂无已回复问题" />
       </div>
     </div>
 
@@ -98,15 +90,11 @@
     >
       <div v-if="selectedQuestion" class="modal-content">
         <div class="question-info">
-          <p><strong>患者:</strong> {{ selectedQuestion.patientName }}</p>
-          <p><strong>问题:</strong> {{ selectedQuestion.question }}</p>
+          <p><strong>患者：</strong>{{ selectedQuestion.patientName }}</p>
+          <p><strong>问题：</strong>{{ selectedQuestion.question }}</p>
         </div>
-        <a-form-item label="您的回复">
-          <a-textarea
-            v-model:value="answerText"
-            :rows="6"
-            placeholder="请输入您的专业建议和回复..."
-          />
+        <a-form-item label="回复内容">
+          <a-textarea v-model:value="answerText" :rows="6" placeholder="请输入专业回复内容" />
         </a-form-item>
       </div>
     </a-modal>
@@ -114,19 +102,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import {
+  CheckOutlined,
   CopyOutlined,
+  EditOutlined,
   LogoutOutlined,
   ReloadOutlined,
   UserOutlined,
-  EditOutlined,
-  CheckOutlined
 } from '@ant-design/icons-vue';
-import { store, Question } from '../store';
+import { store, type Question } from '../store';
 
 const route = useRoute();
 const router = useRouter();
@@ -137,13 +125,13 @@ const roomUrl = computed(() => `${window.location.origin}/consultation/${usernam
 
 const pendingQuestions = computed(() =>
   currentDoctor.value
-    ? store.getQuestionsByDoctor(currentDoctor.value.id).filter(q => q.status === 'pending')
+    ? store.getQuestionsByDoctor(currentDoctor.value.id).filter((item) => item.status === 'pending')
     : []
 );
 
 const answeredQuestions = computed(() =>
   currentDoctor.value
-    ? store.getQuestionsByDoctor(currentDoctor.value.id).filter(q => q.status === 'answered')
+    ? store.getQuestionsByDoctor(currentDoctor.value.id).filter((item) => item.status === 'answered')
     : []
 );
 
@@ -152,16 +140,23 @@ const selectedQuestion = ref<Question | null>(null);
 const answerText = ref('');
 const submitting = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
   if (!currentDoctor.value || currentDoctor.value.username !== username) {
     message.error('请先登录');
     router.push('/doctor/login');
+    return;
+  }
+
+  try {
+    await store.loadQuestions({ doctorId: currentDoctor.value.id });
+  } catch {
+    message.error('问题加载失败');
   }
 });
 
-const copyRoomUrl = () => {
-  navigator.clipboard.writeText(roomUrl.value);
-  message.success('诊室链接已复制到剪贴板');
+const copyRoomUrl = async () => {
+  await navigator.clipboard.writeText(roomUrl.value);
+  message.success('诊室链接已复制');
 };
 
 const logout = () => {
@@ -170,13 +165,19 @@ const logout = () => {
   router.push('/');
 };
 
-const refreshQuestions = () => {
-  message.success('已刷新问题列表');
+const refreshQuestions = async () => {
+  if (!currentDoctor.value) {
+    return;
+  }
+  try {
+    await store.loadQuestions({ doctorId: currentDoctor.value.id });
+    message.success('问题列表已刷新');
+  } catch {
+    message.error('刷新失败');
+  }
 };
 
-const formatTime = (time: string) => {
-  return dayjs(time).format('YYYY-MM-DD HH:mm');
-};
+const formatTime = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm');
 
 const showAnswerModal = (question: Question) => {
   selectedQuestion.value = question;
@@ -190,27 +191,33 @@ const closeAnswerModal = () => {
   answerText.value = '';
 };
 
-const submitAnswer = () => {
+const submitAnswer = async () => {
   if (!answerText.value.trim()) {
     message.error('请输入回复内容');
     return;
   }
 
   submitting.value = true;
-
-  setTimeout(() => {
+  try {
     if (selectedQuestion.value) {
-      store.answerQuestion(selectedQuestion.value.id, answerText.value);
+      await store.answerQuestion(selectedQuestion.value.id, answerText.value);
       message.success('回复成功');
       closeAnswerModal();
     }
+  } catch {
+    message.error('回复失败');
+  } finally {
     submitting.value = false;
-  }, 500);
+  }
 };
 
-const markAsAnswered = (questionId: string) => {
-  store.markQuestionAsAnswered(questionId);
-  message.success('已标记为已解答');
+const markAsAnswered = async (questionId: string) => {
+  try {
+    await store.markQuestionAsAnswered(questionId);
+    message.success('已标记为已答');
+  } catch {
+    message.error('标记失败');
+  }
 };
 </script>
 

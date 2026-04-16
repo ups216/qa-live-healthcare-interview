@@ -3,21 +3,12 @@
     <div class="login-container">
       <div class="login-header">
         <h1>医生登录</h1>
-        <p>请使用您的医生账号登录系统</p>
+        <p>请输入医生账号和密码进入诊室。</p>
       </div>
-      <a-form
-        :model="formState"
-        :rules="rules"
-        @finish="onFinish"
-        layout="vertical"
-        class="login-form"
-      >
+
+      <a-form :model="formState" :rules="rules" @finish="onFinish" layout="vertical" class="login-form">
         <a-form-item label="用户名" name="username">
-          <a-input
-            v-model:value="formState.username"
-            size="large"
-            placeholder="请输入用户名"
-          >
+          <a-input v-model:value="formState.username" size="large" placeholder="请输入用户名">
             <template #prefix>
               <UserOutlined />
             </template>
@@ -25,11 +16,7 @@
         </a-form-item>
 
         <a-form-item label="密码" name="password">
-          <a-input-password
-            v-model:value="formState.password"
-            size="large"
-            placeholder="请输入密码"
-          >
+          <a-input-password v-model:value="formState.password" size="large" placeholder="请输入密码">
             <template #prefix>
               <LockOutlined />
             </template>
@@ -44,8 +31,8 @@
       </a-form>
 
       <a-alert
-        message="测试账号提示"
-        description="用户名: dr-zhang-wei, 密码: 123456"
+        message="测试账号"
+        description="用户名：dr-zhang-wei，密码：123456"
         type="info"
         show-icon
         closable
@@ -58,7 +45,7 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue';
+import { LockOutlined, UserOutlined } from '@ant-design/icons-vue';
 import { store } from '../store';
 
 const router = useRouter();
@@ -76,19 +63,18 @@ const rules = {
 
 const onFinish = async () => {
   loading.value = true;
-
-  setTimeout(() => {
-    const doctor = store.loginDoctor(formState.username, formState.password);
-
-    if (doctor) {
-      message.success('登录成功');
-      router.push(`/doctor/room/${doctor.username}`);
-    } else {
-      message.error('用户名或密码错误');
-    }
-
+  try {
+    const doctor = await store.loginDoctor({
+      username: formState.username,
+      password: formState.password,
+    });
+    message.success('登录成功');
+    router.push(`/doctor/room/${doctor.username}`);
+  } catch {
+    message.error('用户名或密码错误');
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 </script>
 

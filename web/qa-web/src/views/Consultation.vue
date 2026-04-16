@@ -3,49 +3,29 @@
     <div class="consultation-container">
       <div v-if="!currentPatient" class="auth-section">
         <div class="auth-card">
-          <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
-          <a-form
-            :model="authForm"
-            :rules="authRules"
-            @finish="verifyPatient"
-            layout="vertical"
-          >
-            <a-form-item label="姓名" name="name">
-              <a-input
-                v-model:value="authForm.name"
-                size="large"
-                placeholder="请输入您的姓名"
-              >
-                <template #prefix>
-                  <UserOutlined />
-                </template>
-              </a-input>
+          <h1>患者登录</h1>
+          <p>使用用户名和密码登录，首次使用可直接注册。</p>
+          <a-form :model="authForm" @finish="handlePatientAuth" layout="vertical">
+            <a-form-item label="用户名" name="username" :rules="[{ required: true, message: '请输入用户名' }]">
+              <a-input v-model:value="authForm.username" size="large" placeholder="请输入用户名" />
             </a-form-item>
-
-            <a-form-item label="生日" name="birthday">
-              <a-date-picker
-                v-model:value="authForm.birthday"
-                size="large"
-                format="YYYY-MM-DD"
-                placeholder="请选择您的生日"
-                style="width: 100%"
-              />
+            <a-form-item label="密码" name="password" :rules="[{ required: true, message: '请输入密码' }]">
+              <a-input-password v-model:value="authForm.password" size="large" placeholder="请输入密码" />
             </a-form-item>
-
+            <a-form-item v-if="authMode === 'register'" label="显示名称" name="displayName">
+              <a-input v-model:value="authForm.displayName" size="large" placeholder="请输入显示名称，可选" />
+            </a-form-item>
             <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block>
-                验证身份
-              </a-button>
+              <a-space style="width: 100%" direction="vertical" :size="12">
+                <a-button type="primary" html-type="submit" size="large" block>
+                  {{ authMode === 'login' ? '登录' : '注册并登录' }}
+                </a-button>
+                <a-button size="large" block @click="toggleAuthMode">
+                  {{ authMode === 'login' ? '没有账号？去注册' : '已有账号？去登录' }}
+                </a-button>
+              </a-space>
             </a-form-item>
           </a-form>
-
-          <a-alert
-            message="提示"
-            description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
-            type="info"
-            show-icon
-          />
         </div>
       </div>
 
@@ -54,8 +34,8 @@
           <div class="patient-info">
             <UserOutlined class="patient-icon-large" />
             <div>
-              <h1>{{ currentPatient.name }} 的问诊</h1>
-              <p>欢迎使用在线问诊服务</p>
+              <h1>{{ currentPatient.displayName }} 的问诊中心</h1>
+              <p>@{{ currentPatient.username }}</p>
             </div>
           </div>
           <div class="portal-actions">
@@ -66,9 +46,9 @@
           </div>
         </div>
 
-        <div class="selected-doctor" v-if="selectedDoctor">
+        <div v-if="selectedDoctor" class="selected-doctor">
           <a-alert
-            :message="`当前诊室: ${selectedDoctor.name} - ${selectedDoctor.department}`"
+            :message="`当前问诊医生：${selectedDoctor.name} - ${selectedDoctor.department}`"
             type="success"
             show-icon
             closable
@@ -85,29 +65,27 @@
             </a-button>
           </div>
 
-          <a-empty v-if="myQuestions.length === 0" description="您还没有提交过问题" />
+          <a-empty v-if="myQuestions.length === 0" description="暂时还没有提交过问题" />
 
           <div v-else class="my-questions-list">
-            <a-card
-              v-for="question in myQuestions"
-              :key="question.id"
-              class="question-item"
-            >
+            <a-card v-for="question in myQuestions" :key="question.id" class="question-item">
               <template #title>
                 <div class="question-title">
                   <span>{{ question.doctorName }}</span>
                   <a-tag :color="question.status === 'answered' ? 'green' : 'orange'">
-                    {{ question.status === 'answered' ? '已解答' : '待解答' }}
+                    {{ question.status === 'answered' ? '已回复' : '待回复' }}
                   </a-tag>
                 </div>
               </template>
+
               <div class="question-detail">
-                <p class="question-text"><strong>问题:</strong> {{ question.question }}</p>
-                <p class="submit-time">提交时间: {{ formatTime(question.submitTime) }}</p>
+                <p class="question-text"><strong>问题：</strong>{{ question.question }}</p>
+                <p class="submit-time">提交时间：{{ formatTime(question.submitTime) }}</p>
+
                 <div v-if="question.status === 'answered'" class="answer-section">
                   <a-divider />
-                  <p class="answer-text"><strong>医生回复:</strong> {{ question.answer }}</p>
-                  <p class="answer-time">回复时间: {{ formatTime(question.answerTime!) }}</p>
+                  <p class="answer-text"><strong>医生回复：</strong>{{ question.answer }}</p>
+                  <p class="answer-time">回复时间：{{ formatTime(question.answerTime!) }}</p>
                 </div>
               </div>
             </a-card>
@@ -122,94 +100,77 @@
       @ok="submitQuestion"
       @cancel="closeSubmitModal"
       :confirmLoading="submitting"
-      width="600px"
+      width="640px"
+      centered
     >
-      <a-form layout="vertical">
-        <a-form-item label="选择医生" required>
-          <a-select
-            v-model:value="questionForm.doctorId"
-            size="large"
-            placeholder="请选择您要咨询的医生"
-            :disabled="!!selectedDoctor"
-          >
-            <a-select-option
-              v-for="doctor in availableDoctors"
-              :key="doctor.id"
-              :value="doctor.id"
+      <div class="submit-modal-body">
+        <a-form layout="vertical">
+          <a-form-item label="选择医生" required>
+            <a-select
+              v-model:value="questionForm.doctorId"
+              size="large"
+              placeholder="请选择医生"
+              :disabled="!!selectedDoctor"
+              popupClassName="doctor-select-dropdown"
             >
-              <div class="doctor-option">
-                <img :src="doctor.avatar" :alt="doctor.name" class="doctor-option-avatar" />
-                <div>
-                  <div>{{ doctor.name }}</div>
-                  <div style="font-size: 12px; color: #999;">
-                    {{ doctor.title }} · {{ doctor.department }}
+              <a-select-option v-for="doctor in availableDoctors" :key="doctor.id" :value="doctor.id">
+                <div class="doctor-option">
+                  <img :src="doctor.avatar" :alt="doctor.name" class="doctor-option-avatar" />
+                  <div class="doctor-option-content">
+                    <div class="doctor-option-name">{{ doctor.name }}</div>
+                    <div class="doctor-option-meta">{{ doctor.title }} / {{ doctor.department }}</div>
                   </div>
                 </div>
-              </div>
-            </a-select-option>
-          </a-select>
-        </a-form-item>
+              </a-select-option>
+            </a-select>
+          </a-form-item>
 
-        <a-form-item label="您的问题" required>
-          <a-textarea
-            v-model:value="questionForm.question"
-            :rows="6"
-            placeholder="请详细描述您的症状或问题..."
-          />
-        </a-form-item>
-      </a-form>
+          <a-form-item label="问题描述" required>
+            <a-textarea
+              v-model:value="questionForm.question"
+              :rows="6"
+              :maxlength="500"
+              show-count
+              placeholder="请详细描述症状、持续时间、是否已自行用药等信息"
+            />
+          </a-form-item>
+        </a-form>
+      </div>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
-import dayjs, { Dayjs } from 'dayjs';
-import {
-  UserOutlined,
-  LogoutOutlined,
-  PlusOutlined
-} from '@ant-design/icons-vue';
-import { store, Doctor } from '../store';
+import dayjs from 'dayjs';
+import { LogoutOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { store, type Doctor } from '../store';
 
 const route = useRoute();
-
 const currentPatient = computed(() => store.state.currentPatient);
-const myQuestions = computed(() =>
-  currentPatient.value
-    ? store.getQuestionsByPatient(currentPatient.value.id)
-    : []
-);
+const myQuestions = computed(() => currentPatient.value ? store.getQuestionsByPatient(currentPatient.value.id) : []);
+
+const authMode = ref<'login' | 'register'>('login');
+const authForm = reactive({ username: '', password: '', displayName: '' });
 
 const selectedDoctor = ref<Doctor | null>(null);
-
-const authForm = reactive({
-  name: '',
-  birthday: null as Dayjs | null,
-});
-
-const authRules = {
-  name: [{ required: true, message: '请输入姓名' }],
-  birthday: [{ required: true, message: '请选择生日' }],
-};
-
 const submitModalVisible = ref(false);
 const submitting = ref(false);
+const questionForm = reactive({ doctorId: '', question: '' });
+const availableDoctors = computed(() => selectedDoctor.value ? [selectedDoctor.value] : store.getActiveDoctors());
 
-const questionForm = reactive({
-  doctorId: '',
-  question: '',
-});
+onMounted(async () => {
+  try {
+    await store.loadDoctors();
+    if (currentPatient.value) {
+      await store.loadQuestions({ patientId: currentPatient.value.id });
+    }
+  } catch {
+    message.error('医生数据加载失败');
+  }
 
-const availableDoctors = computed(() => {
-  return selectedDoctor.value
-    ? [selectedDoctor.value]
-    : store.getActiveDoctors();
-});
-
-onMounted(() => {
   const doctorUsername = route.params.doctorUsername as string;
   if (doctorUsername) {
     const doctor = store.getDoctorByUsername(doctorUsername);
@@ -220,23 +181,21 @@ onMounted(() => {
   }
 });
 
-const verifyPatient = () => {
-  const birthday = authForm.birthday?.format('YYYY-MM-DD');
-  if (!birthday) {
-    message.error('请选择生日');
-    return;
-  }
+const toggleAuthMode = () => {
+  authMode.value = authMode.value === 'login' ? 'register' : 'login';
+};
 
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
-
-  store.verifyPatient(authForm.name, birthday);
-
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
-  } else {
-    message.success('首次登录,已为您创建账户!');
+const handlePatientAuth = async () => {
+  try {
+    if (authMode.value === 'login') {
+      await store.loginPatient(authForm.username, authForm.password);
+      message.success('登录成功');
+    } else {
+      await store.registerPatient(authForm.username, authForm.password, authForm.displayName);
+      message.success('注册成功');
+    }
+  } catch (error: any) {
+    message.error(error.message || '操作失败');
   }
 };
 
@@ -266,215 +225,94 @@ const closeSubmitModal = () => {
   questionForm.question = '';
 };
 
-const submitQuestion = () => {
+const submitQuestion = async () => {
   if (!questionForm.doctorId) {
-    message.error('请选择医生');
-    return;
+    return message.error('请选择医生');
   }
 
   if (!questionForm.question.trim()) {
-    message.error('请输入问题');
+    return message.error('请输入问题描述');
+  }
+
+  const doctor = store.state.doctors.find((item) => item.id === questionForm.doctorId);
+  if (!doctor || !currentPatient.value) {
     return;
   }
 
   submitting.value = true;
-
-  setTimeout(() => {
-    const doctor = store.state.doctors.find(d => d.id === questionForm.doctorId);
-    if (doctor && currentPatient.value) {
-      store.addQuestion({
-        patientId: currentPatient.value.id,
-        patientName: currentPatient.value.name,
-        doctorId: doctor.id,
-        doctorName: doctor.name,
-        question: questionForm.question,
-      });
-
-      message.success('问题提交成功');
-      closeSubmitModal();
-    }
-
+  try {
+    await store.addQuestion({
+      patientId: currentPatient.value.id,
+      patientName: currentPatient.value.displayName,
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      question: questionForm.question.trim(),
+    });
+    message.success('问题提交成功');
+    closeSubmitModal();
+  } catch {
+    message.error('问题提交失败');
+  } finally {
     submitting.value = false;
-  }, 500);
+  }
 };
 
-const formatTime = (time: string) => {
-  return dayjs(time).format('YYYY-MM-DD HH:mm');
-};
+const formatTime = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm');
 </script>
 
 <style scoped>
-.consultation {
-  min-height: calc(100vh - 64px);
-  padding-top: 64px;
-  background: #f0f2f5;
+.consultation { min-height: calc(100vh - 64px); padding-top: 64px; background: #f0f2f5; }
+.consultation-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.auth-section { min-height: calc(100vh - 112px); display: flex; align-items: center; justify-content: center; }
+.auth-card { background: #fff; border-radius: 16px; padding: 48px; width: 100%; max-width: 450px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); }
+.auth-card h1 { font-size: 28px; font-weight: 700; color: #333; text-align: center; margin-bottom: 8px; }
+.auth-card > p { font-size: 16px; color: #666; text-align: center; margin-bottom: 32px; }
+.patient-portal { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+.portal-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px; display: flex; align-items: center; justify-content: space-between; color: #fff; }
+.patient-info { display: flex; align-items: center; gap: 16px; }
+.patient-icon-large { font-size: 48px; color: #fff; }
+.patient-info h1 { font-size: 24px; font-weight: 600; color: #fff; margin: 0 0 4px; }
+.patient-info p { font-size: 14px; color: rgba(255, 255, 255, 0.85); margin: 0; }
+.selected-doctor { padding: 16px 24px; background: #f6ffed; border-bottom: 1px solid #e8e8e8; }
+.questions-section { padding: 24px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+.my-questions-list { display: flex; flex-direction: column; gap: 16px; }
+.question-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.submit-modal-body { padding-top: 8px; }
+.doctor-option { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.doctor-option-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.doctor-option-content { min-width: 0; }
+.doctor-option-name { font-weight: 600; color: #333; }
+.doctor-option-meta { font-size: 12px; color: #999; }
+
+:deep(.ant-select-single.ant-select-lg .ant-select-selector) {
+  min-height: 56px;
+  align-items: center;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
-.consultation-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-.auth-section {
-  min-height: calc(100vh - 112px);
+:deep(.ant-select-single.ant-select-lg .ant-select-selection-item) {
+  line-height: 1.2 !important;
   display: flex;
   align-items: center;
-  justify-content: center;
+  min-height: 44px;
+  padding-inline-end: 24px;
 }
 
-.auth-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 48px;
+:deep(.ant-select-single.ant-select-lg .ant-select-selection-item .doctor-option) {
   width: 100%;
-  max-width: 450px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.auth-card h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.auth-card > p {
-  font-size: 16px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.patient-portal {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.portal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #fff;
-}
-
-.patient-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.patient-icon-large {
-  font-size: 48px;
-  color: #fff;
-}
-
-.patient-info h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #fff;
-  margin: 0 0 4px;
-}
-
-.patient-info p {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0;
-}
-
-.selected-doctor {
-  padding: 16px 24px;
-  background: #f6ffed;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.questions-section {
-  padding: 24px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-
-.section-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-}
-
-.my-questions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.question-item {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.question-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.question-detail {
-  line-height: 1.6;
-}
-
-.question-text,
-.answer-text {
-  margin-bottom: 12px;
-  color: #333;
-}
-
-.submit-time,
-.answer-time {
-  font-size: 12px;
-  color: #999;
-  margin: 0;
-}
-
-.answer-section {
-  margin-top: 16px;
-}
-
-.doctor-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.doctor-option-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
+:deep(.ant-select-single.ant-select-lg .ant-select-selection-item .doctor-option-avatar) {
+  width: 32px;
+  height: 32px;
 }
 
 @media (max-width: 768px) {
-  .auth-card {
-    margin: 24px;
-    padding: 32px 24px;
-  }
-
-  .portal-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .portal-actions {
-    width: 100%;
-  }
+  .consultation-container { padding: 16px; }
+  .auth-card { padding: 32px 24px; }
+  .portal-header { padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
+  .section-header { flex-direction: column; align-items: stretch; }
 }
 </style>
