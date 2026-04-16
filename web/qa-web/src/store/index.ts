@@ -1,4 +1,5 @@
 import { reactive } from 'vue';
+import axios from 'axios';
 import doctorData from '../data/doctor-user-list.json';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
@@ -55,6 +56,24 @@ const state = reactive<State>({
 
 export const store = {
   state,
+
+  async fetchDoctors(): Promise<void> {
+    try {
+      const response = await axios.get('/api/doctor/list?page=1&pageSize=100');
+      if (response.data.code === 200) {
+        const pageData = response.data.data;
+        state.doctors = pageData.list.map((doctor: any) => ({
+          ...doctor,
+          isActive: doctor.isActive,
+          specialties: typeof doctor.specialties === 'string' 
+            ? JSON.parse(doctor.specialties) 
+            : doctor.specialties
+        }));
+      }
+    } catch (error) {
+      console.error('获取医生列表失败:', error);
+    }
+  },
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(
