@@ -15,10 +15,10 @@ CREATE TABLE IF NOT EXISTS `outpatient_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='门诊用户表';
 
 -- 初始化测试数据（密码均为: password123，使用BCrypt加密）
--- BCrypt哈希值: $2b$10$tQJ2CBSDRaxrkSTvfdv5V.YQ9Z6l7Jky1F4zC0Upz87i.LN5j2WXi (password123)
+-- BCrypt哈希值: $2a$10$qUnIQkrGaxjYBc8Z7VaYi.mYNU8inXnYBJbbpLgNOFjSh56l31yDW (password123)
 INSERT INTO `outpatient_user` (`username`, `password`, `name`, `phone`, `gender`, `birthday`, `status`) VALUES
-('patient001', '$2b$10$tQJ2CBSDRaxrkSTvfdv5V.YQ9Z6l7Jky1F4zC0Upz87i.LN5j2WXi', '张三', '13800138001', '男', '1990-05-15', 1),
-('patient002', '$2b$10$tQJ2CBSDRaxrkSTvfdv5V.YQ9Z6l7Jky1F4zC0Upz87i.LN5j2WXi', '李四', '13800138002', '女', '1988-08-20', 1),
-('patient003', '$2b$10$tQJ2CBSDRaxrkSTvfdv5V.YQ9Z6l7Jky1F4zC0Upz87i.LN5j2WXi', '王五', '13800138003', '男', '1995-12-10', 1),
-('patient004', '$2b$10$tQJ2CBSDRaxrkSTvfdv5V.YQ9Z6l7Jky1F4zC0Upz87i.LN5j2WXi', '赵六', '13800138004', '女', '1992-03-25', 1),
-('patient005', '$2b$10$tQJ2CBSDRaxrkSTvfdv5V.YQ9Z6l7Jky1F4zC0Upz87i.LN5j2WXi', '孙七', '13800138005', '男', '1985-07-08', 0);
+('patient001', '$2a$10$qUnIQkrGaxjYBc8Z7VaYi.mYNU8inXnYBJbbpLgNOFjSh56l31yDW', '张三', '13800138001', '男', '1990-05-15', 1),
+('patient002', '$2a$10$qUnIQkrGaxjYBc8Z7VaYi.mYNU8inXnYBJbbpLgNOFjSh56l31yDW', '李四', '13800138002', '女', '1988-08-20', 1),
+('patient003', '$2a$10$qUnIQkrGaxjYBc8Z7VaYi.mYNU8inXnYBJbbpLgNOFjSh56l31yDW', '王五', '13800138003', '男', '1995-12-10', 1),
+('patient004', '$2a$10$qUnIQkrGaxjYBc8Z7VaYi.mYNU8inXnYBJbbpLgNOFjSh56l31yDW', '赵六', '13800138004', '女', '1992-03-25', 1),
+('patient005', '$2a$10$qUnIQkrGaxjYBc8Z7VaYi.mYNU8inXnYBJbbpLgNOFjSh56l31yDW', '孙七', '13800138005', '男', '1985-07-08', 0);
