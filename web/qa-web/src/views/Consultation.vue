@@ -1,21 +1,21 @@
 <template>
   <div class="consultation">
     <div class="consultation-container">
-      <div v-if="!currentPatient" class="auth-section">
+      <div v-if="!isLoggedIn" class="auth-section">
         <div class="auth-card">
-          <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
+          <h1>门诊用户登录</h1>
+          <p>请输入您的用户名和密码以登录问诊系统</p>
           <a-form
-            :model="authForm"
-            :rules="authRules"
-            @finish="verifyPatient"
+            :model="loginForm"
+            :rules="loginRules"
+            @finish="handleLogin"
             layout="vertical"
           >
-            <a-form-item label="姓名" name="name">
+            <a-form-item label="用户名" name="username">
               <a-input
-                v-model:value="authForm.name"
+                v-model:value="loginForm.username"
                 size="large"
-                placeholder="请输入您的姓名"
+                placeholder="请输入用户名"
               >
                 <template #prefix>
                   <UserOutlined />
@@ -23,28 +23,31 @@
               </a-input>
             </a-form-item>
 
-            <a-form-item label="生日" name="birthday">
-              <a-date-picker
-                v-model:value="authForm.birthday"
+            <a-form-item label="密码" name="password">
+              <a-input-password
+                v-model:value="loginForm.password"
                 size="large"
-                format="YYYY-MM-DD"
-                placeholder="请选择您的生日"
-                style="width: 100%"
-              />
+                placeholder="请输入密码"
+              >
+                <template #prefix>
+                  <LockOutlined />
+                </template>
+              </a-input-password>
             </a-form-item>
 
             <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block>
-                验证身份
+              <a-button type="primary" html-type="submit" size="large" block :loading="loading">
+                登录
               </a-button>
             </a-form-item>
           </a-form>
 
           <a-alert
-            message="提示"
-            description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
+            message="测试账号提示"
+            description="用户名: patient001, 密码: password123"
             type="info"
             show-icon
+            closable
           />
         </div>
       </div>
@@ -54,14 +57,14 @@
           <div class="patient-info">
             <UserOutlined class="patient-icon-large" />
             <div>
-              <h1>{{ currentPatient.name }} 的问诊</h1>
+              <h1>{{ currentUser?.name }} 的问诊</h1>
               <p>欢迎使用在线问诊服务</p>
             </div>
           </div>
           <div class="portal-actions">
-            <a-button @click="logoutPatient">
+            <a-button @click="handleLogout">
               <LogoutOutlined />
-              切换用户
+              退出登录
             </a-button>
           </div>
         </div>
@@ -166,37 +169,47 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import {
   UserOutlined,
+  LockOutlined,
   LogoutOutlined,
   PlusOutlined
 } from '@ant-design/icons-vue';
-import { store, Doctor } from '../store';
+import { store, Doctor, OutpatientUser } from '../store';
 
 const route = useRoute();
 
-const currentPatient = computed(() => store.state.currentPatient);
-const myQuestions = computed(() =>
-  currentPatient.value
-    ? store.getQuestionsByPatient(currentPatient.value.id)
-    : []
-);
+const isLoggedIn = computed(() => store.isLoggedIn());
+const currentUser = computed(() => store.getOutpatientUser());
+const myQuestions = computed(() => {
+  const user = currentUser.value;
+  if (!user) return [];
+  // 使用username作为patientId进行匹配
+  return store.state.questions.filter(q => q.patientId === `outpatient_${user.id}` || q.patientName === user.name);
+});
 
 const selectedDoctor = ref<Doctor | null>(null);
 
-const authForm = reactive({
-  name: '',
-  birthday: null as Dayjs | null,
+const loginForm = reactive({
+  username: '',
+  password: '',
 });
 
-const authRules = {
-  name: [{ required: true, message: '请输入姓名' }],
-  birthday: [{ required: true, message: '请选择生日' }],
+const loginRules = {
+  username: [
+    { required: true, message: '请输入用户名' },
+    { pattern: /^[a-zA-Z0-9_]{4,20}$/, message: '用户名必须是4-20位字母、数字或下划线' }
+  ],
+  password: [
+    { required: true, message: '请输入密码' },
+    { min: 6, max: 20, message: '密码长度必须在6-20位之间' }
+  ],
 };
 
 const submitModalVisible = ref(false);
 const submitting = ref(false);
+const loading = ref(false);
 
 const questionForm = reactive({
   doctorId: '',
@@ -220,30 +233,29 @@ onMounted(() => {
   }
 });
 
-const verifyPatient = () => {
-  const birthday = authForm.birthday?.format('YYYY-MM-DD');
-  if (!birthday) {
-    message.error('请选择生日');
-    return;
-  }
+const handleLogin = async () => {
+  loading.value = true;
 
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
+  const result = await store.loginOutpatient(loginForm.username, loginForm.password);
 
-  store.verifyPatient(authForm.name, birthday);
-
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
+  if (result.success) {
+    message.success('登录成功');
+    loginForm.username = '';
+    loginForm.password = '';
   } else {
-    message.success('首次登录,已为您创建账户!');
+    if (result.remainingAttempts !== undefined && result.remainingAttempts > 0) {
+      message.error(`${result.message}，剩余${result.remainingAttempts}次尝试机会`);
+    } else {
+      message.error(result.message);
+    }
   }
+
+  loading.value = false;
 };
 
-const logoutPatient = () => {
-  store.logoutPatient();
-  selectedDoctor.value = null;
-  message.success('已切换用户');
+const handleLogout = async () => {
+  await store.logoutOutpatient();
+  message.success('已退出登录');
 };
 
 const clearSelectedDoctor = () => {
@@ -281,10 +293,11 @@ const submitQuestion = () => {
 
   setTimeout(() => {
     const doctor = store.state.doctors.find(d => d.id === questionForm.doctorId);
-    if (doctor && currentPatient.value) {
+    const user = currentUser.value;
+    if (doctor && user) {
       store.addQuestion({
-        patientId: currentPatient.value.id,
-        patientName: currentPatient.value.name,
+        patientId: `outpatient_${user.id}`,
+        patientName: user.name,
         doctorId: doctor.id,
         doctorName: doctor.name,
         question: questionForm.question,
@@ -385,6 +398,18 @@ const formatTime = (time: string) => {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.85);
   margin: 0;
+}
+
+.portal-actions :deep(.ant-btn) {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.portal-actions :deep(.ant-btn:hover) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
 }
 
 .selected-doctor {
