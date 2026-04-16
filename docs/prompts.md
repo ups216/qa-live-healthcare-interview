@@ -19,7 +19,7 @@
 并配置外部可访问的端口、root 密码、数据库名为healthcare、数据卷挂载、 数据库默认用utf8mb4编码。
 
 #### 创建医生相关的api
-目标：在 service/qa-service-user 服务中创建可以支持前端 显示医生列表所需要的api （首页和医生页面）
+目标：在 service/qa-service-user 服务中创建可以支持前端 显示医生列表所需要的api （医生页面）
 1. 设计医生表结构（doctor 表），字段及字段类型可以参考web/qa-web/src/data/doctor-user-list.json
 2. 实现查询医生列表的 API 接口
 3. 连接上面的 mysql 数据库
