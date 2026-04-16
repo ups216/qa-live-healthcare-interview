@@ -48,13 +48,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
 
 const allDoctors = computed(() => store.state.doctors);
+
+onMounted(async () => {
+  try {
+    await store.loadDoctors();
+  } catch {
+    message.error('医生数据加载失败');
+  }
+});
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
