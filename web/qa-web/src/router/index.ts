@@ -5,6 +5,7 @@ import DoctorLogin from '../views/DoctorLogin.vue';
 import DoctorRoom from '../views/DoctorRoom.vue';
 import Doctors from '../views/Doctors.vue';
 import About from '../views/About.vue';
+import PatientLogin from '../views/PatientLogin.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -14,13 +15,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/consultation',
-    name: 'Consultation',
-    component: Consultation,
+    redirect: '/patient/login',
   },
   {
     path: '/consultation/:doctorUsername',
-    name: 'ConsultationRoom',
-    component: Consultation,
+    redirect: '/patient/login',
   },
   {
     path: '/doctors',
@@ -41,6 +40,11 @@ const routes: RouteRecordRaw[] = [
     path: '/doctor/room/:username',
     name: 'DoctorRoom',
     component: DoctorRoom,
+  },
+  {
+    path: '/patient/login',
+    name: 'PatientLogin',
+    component: PatientLogin,
   },
 ];
 

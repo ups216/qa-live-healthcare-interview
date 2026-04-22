@@ -48,13 +48,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
 const router = useRouter();
 
 const allDoctors = computed(() => store.state.doctors);
+
+onMounted(async () => {
+  if (!store.state.doctorsLoaded) {
+    await store.fetchDoctors();
+  }
+});
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
