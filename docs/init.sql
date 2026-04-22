@@ -25,6 +25,19 @@ CREATE TABLE IF NOT EXISTS specialties (
     FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE
 );
 
+-- Create patients table
+CREATE TABLE IF NOT EXISTS patients (
+    id VARCHAR(50) PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    birthday DATE,
+    phone VARCHAR(20),
+    gender VARCHAR(10),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Insert sample doctor data
 INSERT INTO doctors (id, username, password, name, title, department, avatar, experience, is_active) VALUES
 ('doc001', 'dr-zhang-wei', '123456', '张伟医生', '主任医师', '心内科', 'https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400', '15年临床经验', TRUE),
@@ -40,3 +53,11 @@ INSERT INTO specialties (doctor_id, specialty) VALUES
 ('doc003', '骨折'), ('doc003', '关节炎'), ('doc003', '运动损伤'),
 ('doc004', '孕期保健'), ('doc004', '妇科炎症'), ('doc004', '产后恢复'),
 ('doc005', '胃炎'), ('doc005', '肠道疾病'), ('doc005', '肝病');
+
+-- Insert sample patient data (password is MD5 of '123456')
+INSERT INTO patients (id, username, password, name, birthday, phone, gender) VALUES
+('patient001', 'patient001', 'e10adc3949ba59abbe56e057f20f883e', '赵明', '1985-03-15', '138****1234', '男'),
+('patient002', 'patient002', 'e10adc3949ba59abbe56e057f20f883e', '孙丽', '1990-07-22', '139****5678', '女'),
+('patient003', 'patient003', 'e10adc3949ba59abbe56e057f20f883e', '周杰', '1978-11-08', '137****9012', '男'),
+('patient004', 'patient004', 'e10adc3949ba59abbe56e057f20f883e', '吴芳', '1995-05-20', '136****3456', '女'),
+('patient005', 'patient005', 'e10adc3949ba59abbe56e057f20f883e', '郑浩', '1988-09-12', '135****7890', '男');
