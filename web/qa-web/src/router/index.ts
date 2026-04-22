@@ -3,6 +3,9 @@ import Home from '../views/Home.vue';
 import Consultation from '../views/Consultation.vue';
 import DoctorLogin from '../views/DoctorLogin.vue';
 import DoctorRoom from '../views/DoctorRoom.vue';
+import PatientLogin from '../views/PatientLogin.vue';
+import PatientRoom from '../views/PatientRoom.vue';
+import PatientResetPassword from '../views/PatientResetPassword.vue';
 import Doctors from '../views/Doctors.vue';
 import About from '../views/About.vue';
 
@@ -42,7 +45,23 @@ const routes: RouteRecordRaw[] = [
     name: 'DoctorRoom',
     component: DoctorRoom,
   },
+  {
+    path: '/patient/login',
+    name: 'PatientLogin',
+    component: PatientLogin,
+  },
+  {
+    path: '/patient/room/:name',
+    name: 'PatientRoom',
+    component: PatientRoom,
+  },
+  {
+    path: '/patient/reset-password',
+    name: 'PatientResetPassword',
+    component: PatientResetPassword,
+  },
 ];
+
 
 const router = createRouter({
   history: createWebHistory(),

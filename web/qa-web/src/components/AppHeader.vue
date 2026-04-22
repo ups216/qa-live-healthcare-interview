@@ -2,31 +2,37 @@
   <a-layout-header class="header">
     <div class="header-content">
       <div class="logo">
-        <img src="https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg?auto=compress&cs=tinysrgb&w=100" alt="QA Live Healthcare" />
-        <span>QA Live Healthcare</span>
+        <img src="https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg?auto=compress&cs=tinysrgb&w=100" :alt="t('header.logo')" />
+        <span>{{ t('header.logo') }}</span>
       </div>
       <a-menu v-model:selectedKeys="selectedKeys" mode="horizontal" class="nav-menu">
         <a-menu-item key="home" @click="navigateTo('/')">
           <HomeOutlined />
-          首页
+          {{ t('header.menu.home') }}
         </a-menu-item>
         <a-menu-item key="consultation" @click="navigateTo('/consultation')">
           <MessageOutlined />
-          问诊
+          {{ t('header.menu.consultation') }}
         </a-menu-item>
         <a-menu-item key="doctors" @click="navigateTo('/doctors')">
           <TeamOutlined />
-          医生
+          {{ t('header.menu.doctors') }}
         </a-menu-item>
         <a-menu-item key="about" @click="navigateTo('/about')">
           <InfoCircleOutlined />
-          关于
+          {{ t('header.menu.about') }}
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-right">
+        <a-select v-model:value="currentLang" style="width: 120px; margin-right: 16px" @change="handleLangChange">
+          <a-select-option value="zh-CN">中文</a-select-option>
+          <a-select-option value="en-US">English</a-select-option>
+        </a-select>
+        <a-button type="primary" class="login-btn" @click="navigateTo('/patient/login')">
+          <UserOutlined />
+          {{ t('header.login') }}
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
@@ -35,10 +41,12 @@
 import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { setLocale, getLocale, t } from '../locales';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+const currentLang = ref(getLocale());
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -54,6 +62,12 @@ watch(() => route.path, (newPath) => {
 
 const navigateTo = (path: string) => {
   router.push(path);
+};
+
+const handleLangChange = (value: string) => {
+  setLocale(value);
+  // 触发页面重新渲染
+  window.location.reload();
 };
 </script>
 
@@ -106,6 +120,11 @@ const navigateTo = (path: string) => {
   border: none;
   margin: 0 40px;
   line-height: 64px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
 }
 
 .login-btn {

@@ -1,41 +1,5 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
-import patientData from '../data/patient-user.json';
-import questionData from '../data/question-list.json';
-
-export interface Doctor {
-  id: string;
-  username: string;
-  password: string;
-  name: string;
-  title: string;
-  department: string;
-  avatar: string;
-  experience: string;
-  specialties: string[];
-  isActive: boolean;
-}
-
-export interface Patient {
-  id: string;
-  name: string;
-  birthday: string;
-  phone: string;
-  gender: string;
-}
-
-export interface Question {
-  id: string;
-  patientId: string;
-  patientName: string;
-  doctorId: string;
-  doctorName: string;
-  question: string;
-  submitTime: string;
-  status: 'pending' | 'answered';
-  answer: string | null;
-  answerTime: string | null;
-}
+import { doctorApi, patientApi, questionApi, Doctor, Patient, Question } from '../api';
 
 interface State {
   doctors: Doctor[];
@@ -43,24 +7,52 @@ interface State {
   questions: Question[];
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
-  patients: patientData as Patient[],
-  questions: questionData as Question[],
+  doctors: [],
+  patients: [],
+  questions: [],
   currentDoctor: null,
   currentPatient: null,
+  loading: false,
+  error: null,
 });
+
+async function loadAllData() {
+  state.loading = true;
+  state.error = null;
+  try {
+    const [doctors, patients, questions] = await Promise.all([
+      doctorApi.getAll(),
+      patientApi.getAll(),
+      questionApi.getAll(),
+    ]);
+    state.doctors = doctors;
+    state.patients = patients;
+    state.questions = questions;
+  } catch (error) {
+    state.error = error instanceof Error ? error.message : 'Failed to load data';
+    console.error('Failed to load data:', error);
+  } finally {
+    state.loading = false;
+  }
+}
+
+loadAllData();
 
 export const store = {
   state,
 
-  loginDoctor(username: string, password: string): Doctor | null {
-    const doctor = state.doctors.find(
-      d => d.username === username && d.password === password
-    );
-    if (doctor) {
+  async reload() {
+    await loadAllData();
+  },
+
+  async loginDoctor(username: string, password: string): Promise<Doctor | null> {
+    const doctor = await doctorApi.getByUsername(username);
+    if (doctor && doctor.password === password) {
       state.currentDoctor = doctor;
       return doctor;
     }
@@ -71,82 +63,99 @@ export const store = {
     state.currentDoctor = null;
   },
 
-  verifyPatient(name: string, birthday: string): Patient {
-    let patient = state.patients.find(
-      p => p.name === name && p.birthday === birthday
-    );
-
-    if (!patient) {
-      patient = {
-        id: `patient${Date.now()}`,
-        name,
-        birthday,
-        phone: '',
-        gender: '',
-      };
-      state.patients.push(patient);
+  async verifyPatient(name: string, birthday: string): Promise<Patient | null> {
+    try {
+      const result = await patientApi.verify(name, birthday);
+      if (result.success && result.patient) {
+        state.currentPatient = result.patient;
+        return result.patient;
+      } else {
+        state.currentPatient = null;
+        return null;
+      }
+    } catch (error) {
+      console.error('验证患者失败:', error);
+      state.currentPatient = null;
+      return null;
     }
+  },
 
-    state.currentPatient = patient;
-    return patient;
+  async loginPatient(name: string, password: string): Promise<{ success: boolean; message: string; patient?: Patient }> {
+    try {
+      const result = await patientApi.login(name, password);
+      if (result.success && result.patient) {
+        state.currentPatient = result.patient;
+      }
+      return result;
+    } catch (error) {
+      console.error('登录失败:', error);
+      return { success: false, message: '登录失败，请稍后重试' };
+    }
+  },
+
+  async resetPassword(name: string, birthday: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      return await patientApi.resetPassword(name, birthday, newPassword);
+    } catch (error) {
+      console.error('密码重置失败:', error);
+      return { success: false, message: '密码重置失败，请稍后重试' };
+    }
+  },
+
+  async changePassword(id: string, oldPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      return await patientApi.changePassword(id, oldPassword, newPassword);
+    } catch (error) {
+      console.error('密码修改失败:', error);
+      return { success: false, message: '密码修改失败，请稍后重试' };
+    }
   },
 
   logoutPatient() {
     state.currentPatient = null;
   },
 
-  getQuestionsByDoctor(doctorId: string): Question[] {
-    return state.questions.filter(q => q.doctorId === doctorId);
+  async getQuestionsByDoctor(doctorId: string): Promise<Question[]> {
+    return await questionApi.getByDoctorId(doctorId);
   },
 
-  getQuestionsByPatient(patientId: string): Question[] {
-    return state.questions.filter(q => q.patientId === patientId);
+  async getQuestionsByPatient(patientId: string): Promise<Question[]> {
+    return await questionApi.getByPatientId(patientId);
   },
 
-  addQuestion(question: Omit<Question, 'id' | 'submitTime' | 'status' | 'answer' | 'answerTime'>): Question {
-    const newQuestion: Question = {
-      ...question,
-      id: `q${Date.now()}`,
-      submitTime: new Date().toISOString(),
-      status: 'pending',
-      answer: null,
-      answerTime: null,
-    };
-    state.questions.push(newQuestion);
-    return newQuestion;
+  async getAllQuestions(): Promise<Question[]> {
+    return await questionApi.getAll();
   },
 
-  answerQuestion(questionId: string, answer: string) {
-    const question = state.questions.find(q => q.id === questionId);
-    if (question) {
-      question.status = 'answered';
-      question.answer = answer;
-      question.answerTime = new Date().toISOString();
-    }
+  async answerQuestion(questionId: string, answer: string): Promise<void> {
+    await questionApi.answer(questionId, answer);
+    await this.reload();
   },
 
-  markQuestionAsAnswered(questionId: string) {
-    const question = state.questions.find(q => q.id === questionId);
-    if (question) {
-      question.status = 'answered';
-      question.answer = '已口述解答';
-      question.answerTime = new Date().toISOString();
-    }
+  async markQuestionAsAnswered(questionId: string): Promise<void> {
+    await questionApi.answer(questionId, '已口述解答');
+    await this.reload();
   },
 
-  getDoctorByUsername(username: string): Doctor | undefined {
-    return state.doctors.find(d => d.username === username);
+  async getDoctorByUsername(username: string): Promise<Doctor | undefined> {
+    const doctor = await doctorApi.getByUsername(username);
+    return doctor || undefined;
   },
 
-  getActiveDoctors(): Doctor[] {
-    return state.doctors.filter(d => d.isActive);
+  async getActiveDoctors(): Promise<Doctor[]> {
+    return await doctorApi.getActive();
   },
 
-  getStatistics() {
-    const totalDoctors = state.doctors.length;
-    const totalQuestions = state.questions.length;
-    const activeSessions = state.questions.filter(q => q.status === 'pending').length;
-    const totalSessions = state.doctors.filter(d => d.isActive).length;
+  async getStatistics() {
+    const [doctors, questions] = await Promise.all([
+      doctorApi.getAll(),
+      questionApi.getAll(),
+    ]);
+
+    const totalDoctors = doctors.length;
+    const totalQuestions = questions.length;
+    const activeSessions = questions.filter(q => q.status === 'pending').length;
+    const totalSessions = doctors.filter(d => d.isActive).length;
 
     return {
       totalDoctors,
