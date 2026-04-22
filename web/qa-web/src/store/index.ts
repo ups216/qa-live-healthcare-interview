@@ -6,7 +6,7 @@ import questionData from '../data/question-list.json';
 export interface Doctor {
   id: string;
   username: string;
-  password: string;
+  password?: string;
   name: string;
   title: string;
   department: string;
@@ -43,18 +43,40 @@ interface State {
   questions: Question[];
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
+  doctorsLoaded: boolean;
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
+  doctorsLoaded: false,
 });
+
+const API_BASE_URL = 'http://localhost:8080';
 
 export const store = {
   state,
+
+  async fetchDoctors(): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/doctors`);
+      const result = await response.json();
+      if (result.code === 200 && result.data) {
+        state.doctors = result.data.map((doctor: any) => ({
+          ...doctor,
+          specialties: doctor.specialties || [],
+        }));
+        state.doctorsLoaded = true;
+      }
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error);
+      state.doctors = doctorData as Doctor[];
+      state.doctorsLoaded = true;
+    }
+  },
 
   loginDoctor(username: string, password: string): Doctor | null {
     const doctor = state.doctors.find(
