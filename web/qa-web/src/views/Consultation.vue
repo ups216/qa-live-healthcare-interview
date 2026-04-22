@@ -3,12 +3,17 @@
     <div class="consultation-container">
       <div v-if="!currentPatient" class="auth-section">
         <div class="auth-card">
-          <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
+          <h1>{{ authStep === 'verify' ? '患者身份验证' : authStep === 'login' ? '患者登录' : '设置密码' }}</h1>
+          <p v-if="authStep === 'verify'">请输入您的姓名和生日以验证身份</p>
+          <p v-else-if="authStep === 'login'">请输入您的姓名和密码登录</p>
+          <p v-else>请设置您的账户密码</p>
+          
+          <!-- 身份验证表单 -->
           <a-form
+            v-if="authStep === 'verify'"
             :model="authForm"
             :rules="authRules"
-            @finish="verifyPatient"
+            @finish="handleVerify"
             layout="vertical"
           >
             <a-form-item label="姓名" name="name">
@@ -40,7 +45,89 @@
             </a-form-item>
           </a-form>
 
+          <!-- 登录表单 -->
+          <a-form
+            v-if="authStep === 'login'"
+            :model="loginForm"
+            :rules="loginRules"
+            @finish="handleLogin"
+            layout="vertical"
+          >
+            <a-form-item label="姓名" name="name">
+              <a-input
+                v-model:value="loginForm.name"
+                size="large"
+                placeholder="请输入您的姓名"
+              >
+                <template #prefix>
+                  <UserOutlined />
+                </template>
+              </a-input>
+            </a-form-item>
+
+            <a-form-item label="密码" name="password">
+              <a-input-password
+                v-model:value="loginForm.password"
+                size="large"
+                placeholder="请输入您的密码"
+              >
+                <template #prefix>
+                  <LockOutlined />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <div class="form-actions">
+              <a-button size="large" @click="authStep = 'verify'">
+                忘记密码？
+              </a-button>
+              <a-button type="primary" html-type="submit" size="large">
+                登录
+              </a-button>
+            </div>
+          </a-form>
+
+          <!-- 密码设置表单 -->
+          <a-form
+            v-if="authStep === 'setPassword'"
+            :model="passwordForm"
+            :rules="passwordRules"
+            @finish="handleSetPassword"
+            layout="vertical"
+          >
+            <a-form-item label="密码" name="password">
+              <a-input-password
+                v-model:value="passwordForm.password"
+                size="large"
+                placeholder="请设置您的密码（至少6位）"
+              >
+                <template #prefix>
+                  <LockOutlined />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <a-form-item label="确认密码" name="confirmPassword">
+              <a-input-password
+                v-model:value="passwordForm.confirmPassword"
+                size="large"
+                placeholder="请再次输入密码"
+              >
+                <template #prefix>
+                  <LockOutlined />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <a-form-item>
+              <a-button type="primary" html-type="submit" size="large" block>
+                设置密码
+              </a-button>
+            </a-form-item>
+          </a-form>
+
           <a-alert
+            v-if="authStep === 'verify'"
             message="提示"
             description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
             type="info"
@@ -170,7 +257,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import {
   UserOutlined,
   LogoutOutlined,
-  PlusOutlined
+  PlusOutlined,
+  LockOutlined
 } from '@ant-design/icons-vue';
 import { store, Doctor } from '../store';
 
@@ -185,9 +273,22 @@ const myQuestions = computed(() =>
 
 const selectedDoctor = ref<Doctor | null>(null);
 
+// 认证步骤：verify-验证身份, login-登录, setPassword-设置密码
+const authStep = ref<'verify' | 'login' | 'setPassword'>('verify');
+
 const authForm = reactive({
   name: '',
   birthday: null as Dayjs | null,
+});
+
+const loginForm = reactive({
+  name: '',
+  password: '',
+});
+
+const passwordForm = reactive({
+  password: '',
+  confirmPassword: '',
 });
 
 const authRules = {
@@ -195,8 +296,32 @@ const authRules = {
   birthday: [{ required: true, message: '请选择生日' }],
 };
 
+const loginRules = {
+  name: [{ required: true, message: '请输入姓名' }],
+  password: [{ required: true, message: '请输入密码' }],
+};
+
+const passwordRules = {
+  password: [
+    { required: true, message: '请设置密码' },
+    { min: 6, message: '密码长度至少6位' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码' },
+    {
+      validator: (_, value: string) => {
+        if (value !== passwordForm.password) {
+          return Promise.reject(new Error('两次输入的密码不一致'));
+        }
+        return Promise.resolve();
+      }
+    }
+  ],
+};
+
 const submitModalVisible = ref(false);
 const submitting = ref(false);
+const loading = ref(false);
 
 const questionForm = reactive({
   doctorId: '',
@@ -220,23 +345,76 @@ onMounted(() => {
   }
 });
 
-const verifyPatient = () => {
+const handleVerify = async () => {
   const birthday = authForm.birthday?.format('YYYY-MM-DD');
   if (!birthday) {
     message.error('请选择生日');
     return;
   }
 
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
+  loading.value = true;
+  try {
+    const patient = await store.verifyPatient(authForm.name, birthday);
+    if (patient) {
+      if (patient.password) {
+        // 已有密码，跳转到登录
+        loginForm.name = authForm.name;
+        authStep.value = 'login';
+      } else {
+        // 无密码，跳转到设置密码
+        authStep.value = 'setPassword';
+      }
+    } else {
+      // 新患者，跳转到设置密码
+      authStep.value = 'setPassword';
+    }
+  } catch (error) {
+    message.error('验证失败，请稍后重试');
+  } finally {
+    loading.value = false;
+  }
+};
 
-  store.verifyPatient(authForm.name, birthday);
+const handleLogin = async () => {
+  loading.value = true;
+  try {
+    const result = await store.loginPatient(loginForm.name, loginForm.password);
+    if (result.success) {
+      message.success(result.message);
+    } else {
+      message.error(result.message);
+    }
+  } catch (error) {
+    message.error('登录失败，请稍后重试');
+  } finally {
+    loading.value = false;
+  }
+};
 
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
-  } else {
-    message.success('首次登录,已为您创建账户!');
+const handleSetPassword = async () => {
+  const birthday = authForm.birthday?.format('YYYY-MM-DD');
+  if (!birthday) {
+    message.error('请选择生日');
+    return;
+  }
+
+  loading.value = true;
+  try {
+    const result = await store.resetPassword(authForm.name, birthday, passwordForm.password);
+    if (result.success) {
+      message.success(result.message);
+      // 密码设置成功后，自动登录
+      const loginResult = await store.loginPatient(authForm.name, passwordForm.password);
+      if (loginResult.success) {
+        message.success('登录成功');
+      }
+    } else {
+      message.error(result.message);
+    }
+  } catch (error) {
+    message.error('密码设置失败，请稍后重试');
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -459,6 +637,26 @@ const formatTime = (time: string) => {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.form-actions .ant-btn {
+  flex: 1;
+  margin: 0 8px;
+}
+
+.form-actions .ant-btn:first-child {
+  margin-left: 0;
+}
+
+.form-actions .ant-btn:last-child {
+  margin-right: 0;
 }
 
 @media (max-width: 768px) {
