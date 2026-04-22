@@ -1,0 +1,204 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-04-22T13:35:06.009Z
+provider: 
+---
+
+# QA Live Healthcare Interview - 项目技能
+
+## 项目概述
+
+这是一个在线医疗问诊平台的 AI 编码面试项目（LeansofX 出品），面试者需在1天内通过 AI Coding 完成指定需求。
+
+## 技术栈
+
+### 前端 (`web/qa-web/`)
+- Vue 3.5 + TypeScript 5.5 + Vite 5.4
+- Ant Design Vue 4.2 + @ant-design/icons-vue
+- Vue Router 4 (HTML5 History 模式)
+- dayjs 日期处理
+- 状态管理：Vue 3 `reactive` 自建 store（无 Pinia/Vuex）
+- 运行命令：`cd web/qa-web && npm run dev`
+
+### 后端 (`server/`)
+- Java 17 + Spring Boot 3.5.7 + Maven
+- **qa-service-user**：用户管理服务，端口 8080，包名 `com.leansofx.qaserviceuser`
+  - 已有：启动类、CorsConfig、TestController（仅CORS测试接口）
+  - Actuator 已启用（health/info/metrics/env/beans/loggers）
+- **qa-service-question**：问诊问题服务，端口 8081，包名 `com.leansofx.qaservicequestion`
+  - 仅启动类骨架，无业务代码
+- **qa-service-statistic**：统计服务，空目录（仅 .gitkeep）
+- 运行命令：`cd server/qa-service-user && ./mvnw spring-boot:run` 或 `./mvnw.cmd spring-boot:run`
+
+### 数据库（待引入）
+- MySQL（需通过 Docker Compose 创建）
+- phpMyAdmin 管理界面
+
+## 项目结构
+
+```
+d:/dev/work/qa-live-healthcare-interview/
+├── README.md                          # 面试需求说明
+├── _TRAINING_ASSETS/                  # 训练资源zip
+├── .asdm/toolsets/                    # AI辅助开发方法论工具集
+├── server/
+│   ├── qa-service-user/               # 用户服务 (8080)
+│   ├── qa-service-question/           # 问题服务 (8081)
+│   └── qa-service-statistic/          # 统计服务（空）
+└── web/qa-web/
+    ├── src/
+    │   ├── main.ts                    # 入口
+    │   ├── App.vue                    # 根组件
+    │   ├── router/index.ts            # 路由（7条）
+    │   ├── store/index.ts             # 响应式状态管理
+    │   ├── components/                # AppHeader, AppFooter
+    │   ├── views/                     # Home, Doctors, Consultation, DoctorLogin, DoctorRoom, About
+    │   ├── data/                      # JSON模拟数据
+    │   │   ├── doctor-user-list.json  # 5位医生
+    │   │   ├── patient-user.json      # 5位患者
+    │   │   └── question-list.json     # 7条问诊记录
+    │   └── style.css                  # 全局样式
+    ├── package.json
+    └── vite.config.ts
+```
+
+## 路由表
+
+| 路径 | 组件 | 说明 |
+|------|------|------|
+| `/` | Home.vue | 首页 |
+| `/consultation` | Consultation.vue | 患者问诊 |
+| `/consultation/:doctorUsername` | Consultation.vue | 指定医生问诊 |
+| `/doctors` | Doctors.vue | 医生列表 |
+| `/about` | About.vue | 关于 |
+| `/doctor/login` | DoctorLogin.vue | 医生登录 |
+| `/doctor/room/:username` | DoctorRoom.vue | 医生诊室 |
+
+## 数据模型
+
+### Doctor
+```typescript
+interface Doctor {
+  id: string;           // "doc001" ~ "doc005"
+  username: string;     // "dr-zhang-wei" 等
+  password: string;     // 明文 "123456"（安全隐患）
+  name: string;         // "张伟医生"
+  title: string;        // "主任医师"/"副主任医师"/"主治医师"
+  department: string;   // "心内科"/"儿科"/"骨科"/"妇产科"/"消化内科"
+  avatar: string;       // Pexels图片URL
+  experience: string;   // "15年临床经验"
+  specialties: string[];// ["高血压","冠心病","心律失常"]
+  isActive: boolean;    // 是否在线
+}
+```
+
+### Patient
+```typescript
+interface Patient {
+  id: string;           // "patient001" ~ "patient005"
+  name: string;
+  birthday: string;     // "1985-03-15"
+  phone: string;
+  gender: string;
+}
+```
+
+### Question
+```typescript
+interface Question {
+  id: string;
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  question: string;
+  submitTime: string;     // ISO时间
+  status: 'pending' | 'answered';
+  answer: string | null;
+  answerTime: string | null;
+}
+```
+
+## Store 方法 (`web/qa-web/src/store/index.ts`)
+
+- `store.state` - 响应式状态（doctors/patients/questions/currentDoctor/currentPatient）
+- `store.loginDoctor(username, password)` - 医生登录（前端JSON比对）
+- `store.logoutDoctor()` - 医生登出
+- `store.verifyPatient(name, birthday)` - 患者身份验证（不存在则自动创建）
+- `store.logoutPatient()` - 患者登出
+- `store.getQuestionsByDoctor(doctorId)` - 获取医生的问题列表
+- `store.getQuestionsByPatient(patientId)` - 获取患者的问题列表
+- `store.addQuestion(question)` - 添加新问题
+- `store.answerQuestion(questionId, answer)` - 回答问题
+- `store.markQuestionAsAnswered(questionId)` - 标记为已解答
+- `store.getDoctorByUsername(username)` - 按用户名查找医生
+- `store.getActiveDoctors()` - 获取在线医生列表
+- `store.getStatistics()` - 获取统计数据
+
+## 面试需求清单
+
+1. **首页中英文国际化**：集成 vue-i18n，语言资源放 `src/locales/`，仅处理首页
+2. **医生数据后端化**：MySQL + docker-compose + phpMyAdmin + qa-service-user REST API + 前后端联调
+3. **患者用户名密码登录**：编写PRD模板 → AI写PRD → AI按PRD开发
+4. **接口测试**：curl 测试所有接口 + `/docs/API_TEST.md`
+5. **交付文档**：`/docs/` 下放 PRD模板、PRD文档、设计文档、API_TEST.md、测试报告、prompts.md
+
+## 面试技术要求（详细）
+
+### 分支要求
+- 创建特性分支（自行命名），在分支内完成编码/测试/文档编写
+- 完成后将分支推送到代码库
+- 基于分支创建指向 main 分支的 PR，发送 PR 链接
+
+### 需求1：首页中英文切换
+- 在页面右上角添加语言切换下拉菜单
+- 用户选择 中文/English 选项时动态切换页面显示内容到对应语言
+- 中英文语言资源文件保存在 `web/qa-web/src/locales` 目录
+- 只需处理首页本身，无需处理其他页面
+
+### 需求2：医生数据后端化
+- 创建 `docker-compose.yml` 用于创建 MySQL 数据库，并挂接 phpMyAdmin 作为数据库服务器管理界面
+- 在 qa-service-user 服务中创建支持前端医生页面显示医生列表所需的 API
+- 完成前后端联调
+
+### 需求3：患者用户名密码登录
+- 在 `/docs` 目录中编写规范的 PRD 文档模板
+- 指导 AI 使用以上模板编写此特性的 PRD 文档
+- 指导 AI 使用此 PRD 文档完成特性开发，如需拆分请在 PRD 文档中提供拆分步骤
+
+### 测试要求
+- 使用 curl 构建对所有需求涉及接口的测试
+- 提供 `/docs/API_TEST.md` 描述接口测试流程
+- 指导 AI 使用 API_TEST.md 完成测试并生成测试报告
+
+### 交付物要求
+- 根据需求完成的代码，并录制视频完整展示所完成的需求
+- `/docs` 目录中的：PRD模板、PRD文档、设计文档（如需要）、API_TEST.md、测试报告文档
+- `/docs/prompts.md` 中列出过程中所使用的所有提示词
+
+### 面试流程要求
+- 所有编码/测试/文档必须通过 AI Coding 提示词完成，不得直接编码（可对 AI 生成代码手工微调）
+- 完成编码后，基于分支创建指向 main 的 PR，发送 PR 链接
+- 完成后联系面试官并发送视频和 PR 链接
+- 面试者需在1天内完成以上流程
+
+## 已有API
+
+### qa-service-user (端口8080)
+- `GET/POST/OPTIONS /api/test/cors` - CORS测试
+- `GET /actuator/health` - 健康检查
+- `GET /actuator/info` - 应用信息
+
+### qa-service-question (端口8081)
+- 无业务接口
+
+## 开发注意事项
+
+- 所有编码必须通过 AI Coding 提示词完成，不得直接手工编码（可对AI生成代码手工微调）
+- 所有提示词需记录到 `/docs/prompts.md`
+- 医生密码当前明文存储在前端JSON，后端化时需考虑安全
+- 前端 store 直接 import JSON 文件，后端化时需改为 API 调用
+- CORS 已配置允许所有来源
+- 后端包名遵循：`com.leansofx.qaserviceuser` / `com.leansofx.qaservicequestion`
