@@ -1,0 +1,43 @@
+export default {
+  home: {
+    heroTitle: 'Professional Online Healthcare Platform',
+    heroSubtitle: 'Connecting patients with professional doctors for convenient and efficient medical consultation services',
+    featureProfessionalTeam: 'Professional Doctor Team',
+    featureOnlineConsultation: 'Real-time Online Consultation',
+    featurePrivacyProtection: 'Privacy & Security Protection',
+    startConsultation: 'Start Consultation',
+    viewDoctors: 'View Doctors',
+    totalDoctors: 'Professional Doctors',
+    totalQuestions: 'Total Questions',
+    pendingQuestions: 'Pending Questions',
+    onlineRooms: 'Online Rooms',
+    openRooms: 'Open Consultation Rooms',
+    roomSubtitle: 'The following doctor rooms are open for consultation',
+    online: 'Online',
+    enterRoom: 'Enter Room',
+    navHome: 'Home',
+    navConsultation: 'Consultation',
+    navDoctors: 'Doctors',
+    navAbout: 'About',
+    doctorLogin: 'Doctor Login'
+  },
+  footer: {
+    brandName: 'QA Live Healthcare',
+    brandDesc: 'Professional Online Healthcare Platform',
+    brandService: 'Providing convenient and professional medical consultation services for you',
+    quickLinks: 'Quick Links',
+    navHome: 'Home',
+    navConsultation: 'Consultation',
+    navDoctors: 'Doctor Team',
+    navAbout: 'About Us',
+    contactUs: 'Contact Us',
+    serviceHotline: 'Service Hotline',
+    serviceTime: 'Service Hours',
+    email: 'Email',
+    legalInfo: 'Legal Information',
+    privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+    medicalDisclaimer: 'Medical Disclaimer',
+    copyright: '2025 QA Live Healthcare. All rights reserved.'
+  }
+};

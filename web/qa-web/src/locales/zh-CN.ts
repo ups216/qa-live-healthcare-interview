@@ -1,0 +1,43 @@
+export default {
+  home: {
+    heroTitle: '专业在线医疗问诊平台',
+    heroSubtitle: '连接专业医生与患者,提供便捷、高效的医疗咨询服务',
+    featureProfessionalTeam: '专业医生团队',
+    featureOnlineConsultation: '实时在线问诊',
+    featurePrivacyProtection: '隐私安全保护',
+    startConsultation: '立即问诊',
+    viewDoctors: '查看医生',
+    totalDoctors: '专业医生',
+    totalQuestions: '问题总数',
+    pendingQuestions: '待响应问题',
+    onlineRooms: '在线诊室',
+    openRooms: '开放诊室',
+    roomSubtitle: '以下医生诊室正在开放,欢迎咨询',
+    online: '在线',
+    enterRoom: '进入诊室',
+    navHome: '首页',
+    navConsultation: '问诊',
+    navDoctors: '医生',
+    navAbout: '关于',
+    doctorLogin: '医生登录'
+  },
+  footer: {
+    brandName: 'QA Live Healthcare',
+    brandDesc: '专业的在线医疗问诊平台',
+    brandService: '为您提供便捷、专业的医疗咨询服务',
+    quickLinks: '快速链接',
+    navHome: '首页',
+    navConsultation: '问诊',
+    navDoctors: '医生团队',
+    navAbout: '关于我们',
+    contactUs: '联系我们',
+    serviceHotline: '客服热线',
+    serviceTime: '服务时间',
+    email: '邮箱',
+    legalInfo: '法律信息',
+    privacyPolicy: '隐私政策',
+    termsOfService: '服务条款',
+    medicalDisclaimer: '医疗免责声明',
+    copyright: '2025 QA Live Healthcare. All rights reserved.'
+  }
+};
