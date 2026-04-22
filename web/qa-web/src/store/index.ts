@@ -18,8 +18,9 @@ export interface Doctor {
 
 export interface Patient {
   id: string;
+  username?: string;
   name: string;
-  birthday: string;
+  birthday?: string;
   phone: string;
   gender: string;
 }
@@ -44,6 +45,7 @@ interface State {
   currentDoctor: Doctor | null;
   currentPatient: Patient | null;
   doctorsLoaded: boolean;
+  patientToken: string | null;
 }
 
 const state = reactive<State>({
@@ -53,6 +55,7 @@ const state = reactive<State>({
   currentDoctor: null,
   currentPatient: null,
   doctorsLoaded: false,
+  patientToken: localStorage.getItem('patientToken'),
 });
 
 const API_BASE_URL = 'http://localhost:8080';
@@ -76,6 +79,39 @@ export const store = {
       state.doctors = doctorData as Doctor[];
       state.doctorsLoaded = true;
     }
+  },
+
+  async loginPatient(username: string, password: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/patients/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+
+      if (result.code === 200 && result.data) {
+        state.currentPatient = result.data.patient;
+        state.patientToken = result.data.token;
+        localStorage.setItem('patientToken', result.data.token);
+        localStorage.setItem('currentPatient', JSON.stringify(result.data.patient));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Patient login failed:', error);
+      return false;
+    }
+  },
+
+  logoutPatient() {
+    state.currentPatient = null;
+    state.patientToken = null;
+    localStorage.removeItem('patientToken');
+    localStorage.removeItem('currentPatient');
   },
 
   loginDoctor(username: string, password: string): Doctor | null {
@@ -111,10 +147,6 @@ export const store = {
 
     state.currentPatient = patient;
     return patient;
-  },
-
-  logoutPatient() {
-    state.currentPatient = null;
   },
 
   getQuestionsByDoctor(doctorId: string): Question[] {

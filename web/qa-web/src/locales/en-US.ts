@@ -19,7 +19,8 @@ export default {
     navConsultation: 'Consultation',
     navDoctors: 'Doctors',
     navAbout: 'About',
-    doctorLogin: 'Doctor Login'
+    doctorLogin: 'Doctor Login',
+    patientLogin: 'Patient Login'
   },
   footer: {
     brandName: 'QA Live Healthcare',
@@ -39,5 +40,15 @@ export default {
     termsOfService: 'Terms of Service',
     medicalDisclaimer: 'Medical Disclaimer',
     copyright: '2025 QA Live Healthcare. All rights reserved.'
+  },
+  patientLogin: {
+    title: 'Patient Login',
+    subtitle: 'Login to the consultation platform with your account',
+    username: 'Please enter username',
+    password: 'Please enter password',
+    usernameRequired: 'Please enter username',
+    passwordRequired: 'Please enter password',
+    loginBtn: 'Login',
+    backHome: 'Back to Home'
   }
 };

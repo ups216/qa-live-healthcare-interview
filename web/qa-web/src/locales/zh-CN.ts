@@ -19,7 +19,8 @@ export default {
     navConsultation: '问诊',
     navDoctors: '医生',
     navAbout: '关于',
-    doctorLogin: '医生登录'
+    doctorLogin: '医生登录',
+    patientLogin: '患者登录'
   },
   footer: {
     brandName: 'QA Live Healthcare',
@@ -39,5 +40,15 @@ export default {
     termsOfService: '服务条款',
     medicalDisclaimer: '医疗免责声明',
     copyright: '2025 QA Live Healthcare. All rights reserved.'
+  },
+  patientLogin: {
+    title: '患者登录',
+    subtitle: '使用您的账号密码登录问诊平台',
+    username: '请输入用户名',
+    password: '请输入密码',
+    usernameRequired: '请输入用户名',
+    passwordRequired: '请输入密码',
+    loginBtn: '登录',
+    backHome: '返回首页'
   }
 };
