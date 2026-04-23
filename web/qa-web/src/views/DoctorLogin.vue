@@ -77,8 +77,8 @@ const rules = {
 const onFinish = async () => {
   loading.value = true;
 
-  setTimeout(() => {
-    const doctor = store.loginDoctor(formState.username, formState.password);
+  setTimeout(async () => {
+    const doctor = await store.loginDoctor(formState.username, formState.password);
 
     if (doctor) {
       message.success('登录成功');

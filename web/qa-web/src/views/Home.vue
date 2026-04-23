@@ -1,34 +1,50 @@
 <template>
   <div class="home">
+    <div class="lang-switcher">
+      <a-dropdown placement="bottomRight" trigger="click">
+        <a-button>
+          {{ currentLocaleLabel }}
+        </a-button>
+        <template #overlay>
+          <a-menu :selectedKeys="[locale]" @click="onLocaleMenuClick">
+            <a-menu-item key="zh-CN">{{ t('home.lang.zh') }}</a-menu-item>
+            <a-menu-item key="en">{{ t('home.lang.en') }}</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ t('home.hero.title') }}</h1>
+        <p class="hero-subtitle">{{ t('home.hero.subtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ t('home.hero.features.doctors') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ t('home.hero.features.realtime') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ t('home.hero.features.privacy') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ t('home.hero.actions.consultNow') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ t('home.hero.actions.viewDoctors') }}
           </a-button>
         </div>
       </div>
       <div class="hero-image">
-        <img src="https://images.pexels.com/photos/4386467/pexels-photo-4386467.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Healthcare" />
+        <img
+          src="https://images.pexels.com/photos/4386467/pexels-photo-4386467.jpeg?auto=compress&cs=tinysrgb&w=600"
+          :alt="t('home.hero.imageAlt')"
+        />
       </div>
     </section>
 
@@ -39,7 +55,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <p>{{ t('home.stats.doctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +64,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ t('home.stats.questions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +73,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ t('home.stats.pending') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -66,14 +82,14 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <p>{{ t('home.stats.rooms') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ t('home.rooms.title') }}</h2>
+      <p class="section-subtitle">{{ t('home.rooms.subtitle') }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,7 +99,7 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="t('home.rooms.online')" />
           </div>
           <div class="room-body">
             <h3>{{ doctor.name }}</h3>
@@ -96,7 +112,7 @@
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ t('home.rooms.enter') }}</a-button>
           </div>
         </div>
       </div>
@@ -107,6 +123,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { store } from '../store';
 import {
   CheckCircleOutlined,
@@ -115,8 +132,10 @@ import {
   ClockCircleOutlined,
   UserOutlined
 } from '@ant-design/icons-vue';
+import { setPersistedLocale, type SupportedLocale } from '../i18n';
 
 const router = useRouter();
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const statistics = computed(() => store.getStatistics());
 const activeDoctors = computed(() => store.getActiveDoctors());
@@ -124,11 +143,29 @@ const activeDoctors = computed(() => store.getActiveDoctors());
 const navigateTo = (path: string) => {
   router.push(path);
 };
+
+const currentLocaleLabel = computed(() => {
+  return locale.value === 'zh-CN' ? t('home.lang.zh') : t('home.lang.en');
+});
+
+const onLocaleMenuClick = (info: { key: string }) => {
+  const next = (info.key === 'zh-CN' ? 'zh-CN' : 'en') as SupportedLocale;
+  locale.value = next;
+  setPersistedLocale(next);
+};
 </script>
 
 <style scoped>
 .home {
   padding-top: 64px;
+  position: relative;
+}
+
+.lang-switcher {
+  position: fixed;
+  right: 24px;
+  top: 80px;
+  z-index: 1001;
 }
 
 .hero {

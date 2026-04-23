@@ -1,12 +1,10 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
-import patientData from '../data/patient-user.json';
+// import patientData from '../data/patient-user.json'; // Data migrated to MySQL
 import questionData from '../data/question-list.json';
 
 export interface Doctor {
   id: string;
   username: string;
-  password: string;
   name: string;
   title: string;
   department: string;
@@ -46,25 +44,67 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
-  patients: patientData as Patient[],
+  doctors: [] as Doctor[],
+  patients: [] as Patient[], // Data is now fetched from API
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
-});
+}) as State;
+
+async function apiGet<T>(path: string): Promise<T> {
+  const res = await fetch(path);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as T;
+}
+
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as T;
+}
 
 export const store = {
   state,
 
-  loginDoctor(username: string, password: string): Doctor | null {
-    const doctor = state.doctors.find(
-      d => d.username === username && d.password === password
-    );
-    if (doctor) {
+  async loadDoctors(): Promise<Doctor[]> {
+    const doctors = await apiGet<Doctor[]>('/api/doctors');
+    state.doctors = doctors as Doctor[];
+    return doctors;
+  },
+
+  async refreshActiveDoctors(): Promise<Doctor[]> {
+    const doctors = await apiGet<Doctor[]>('/api/doctors/active');
+    // 仍然同步到 state，保持页面只读 state 的用法不变
+    // 这里选择用 active 列表覆盖（也可以做 merge），以减少本次改造范围
+    state.doctors = doctors as Doctor[];
+    return doctors;
+  },
+
+  async getDoctorByUsername(username: string): Promise<Doctor | undefined> {
+    try {
+      return await apiGet<Doctor>(`/api/doctors/${encodeURIComponent(username)}`);
+    } catch {
+      return undefined;
+    }
+  },
+
+  async loginDoctor(username: string, password: string): Promise<Doctor | null> {
+    try {
+      const doctor = await apiPost<Doctor>('/api/doctors/login', { username, password });
       state.currentDoctor = doctor;
       return doctor;
+    } catch {
+      return null;
     }
-    return null;
   },
 
   logoutDoctor() {
@@ -93,6 +133,34 @@ export const store = {
 
   logoutPatient() {
     state.currentPatient = null;
+  },
+
+  async verifyPatientByNameAndBirthday(name: string, birthday: string): Promise<Patient | null> {
+    try {
+      const patient = await apiPost<Patient>('/api/patients/verify', { name, birthday });
+      state.currentPatient = patient;
+      return patient;
+    } catch {
+      return null;
+    }
+  },
+
+  async loginPatient(username: string, password: string): Promise<Patient | null> {
+    try {
+      const patient = await apiPost<Patient>('/api/patients/login', { username, password });
+      state.currentPatient = patient;
+      return patient;
+    } catch {
+      return null;
+    }
+  },
+
+  async registerPatient(name: string, phone: string, gender?: string): Promise<any> {
+    try {
+      return await apiPost('/api/patients/register', { name, phone, gender });
+    } catch (error) {
+      throw error;
+    }
   },
 
   getQuestionsByDoctor(doctorId: string): Question[] {
@@ -132,10 +200,6 @@ export const store = {
       question.answer = '已口述解答';
       question.answerTime = new Date().toISOString();
     }
-  },
-
-  getDoctorByUsername(username: string): Doctor | undefined {
-    return state.doctors.find(d => d.username === username);
   },
 
   getActiveDoctors(): Doctor[] {

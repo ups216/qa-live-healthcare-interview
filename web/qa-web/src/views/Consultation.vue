@@ -4,47 +4,92 @@
       <div v-if="!currentPatient" class="auth-section">
         <div class="auth-card">
           <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
-          <a-form
-            :model="authForm"
-            :rules="authRules"
-            @finish="verifyPatient"
-            layout="vertical"
-          >
-            <a-form-item label="姓名" name="name">
-              <a-input
-                v-model:value="authForm.name"
-                size="large"
-                placeholder="请输入您的姓名"
+          <p>请选择一种方式登录系统</p>
+          
+          <a-tabs v-model:activeKey="loginMode" centered>
+            <a-tab-pane key="password" tab="账号密码登录">
+              <a-form
+                :model="passwordForm"
+                :rules="passwordRules"
+                @finish="handlePasswordLogin"
+                layout="vertical"
               >
-                <template #prefix>
-                  <UserOutlined />
-                </template>
-              </a-input>
-            </a-form-item>
+                <a-form-item label="用户名（手机号）" name="username">
+                  <a-input
+                    v-model:value="passwordForm.username"
+                    size="large"
+                    placeholder="请输入您的手机号"
+                  >
+                    <template #prefix>
+                      <UserOutlined />
+                    </template>
+                  </a-input>
+                </a-form-item>
 
-            <a-form-item label="生日" name="birthday">
-              <a-date-picker
-                v-model:value="authForm.birthday"
-                size="large"
-                format="YYYY-MM-DD"
-                placeholder="请选择您的生日"
-                style="width: 100%"
-              />
-            </a-form-item>
+                <a-form-item label="密码" name="password">
+                  <a-input-password
+                    v-model:value="passwordForm.password"
+                    size="large"
+                    placeholder="请输入密码（默认手机号后四位）"
+                  >
+                    <template #prefix>
+                      <LockOutlined />
+                    </template>
+                  </a-input-password>
+                </a-form-item>
 
-            <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block>
-                验证身份
-              </a-button>
-            </a-form-item>
-          </a-form>
+                <a-form-item>
+                  <a-button type="primary" html-type="submit" size="large" block :loading="loading">
+                    登录
+                  </a-button>
+                </a-form-item>
+              </a-form>
+            </a-tab-pane>
+
+            <a-tab-pane key="birthday" tab="姓名生日登录">
+              <a-form
+                :model="birthdayForm"
+                :rules="birthdayRules"
+                @finish="handleBirthdayLogin"
+                layout="vertical"
+              >
+                <a-form-item label="姓名" name="name">
+                  <a-input
+                    v-model:value="birthdayForm.name"
+                    size="large"
+                    placeholder="请输入您的姓名"
+                  >
+                    <template #prefix>
+                      <UserOutlined />
+                    </template>
+                  </a-input>
+                </a-form-item>
+
+                <a-form-item label="生日" name="birthday">
+                  <a-date-picker
+                    v-model:value="birthdayForm.birthday"
+                    size="large"
+                    format="YYYY-MM-DD"
+                    placeholder="请选择您的生日"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+
+                <a-form-item>
+                  <a-button type="primary" html-type="submit" size="large" block :loading="loading">
+                    验证身份
+                  </a-button>
+                </a-form-item>
+              </a-form>
+            </a-tab-pane>
+          </a-tabs>
 
           <a-alert
             message="提示"
-            description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
+            description="新用户请使用手机号注册。首次登录默认密码为手机号后四位。"
             type="info"
             show-icon
+            style="margin-top: 16px;"
           />
         </div>
       </div>
@@ -170,11 +215,14 @@ import dayjs, { Dayjs } from 'dayjs';
 import {
   UserOutlined,
   LogoutOutlined,
-  PlusOutlined
+  PlusOutlined,
+  LockOutlined
 } from '@ant-design/icons-vue';
 import { store, Doctor } from '../store';
 
 const route = useRoute();
+const loading = ref(false);
+const loginMode = ref('password'); // 'password' | 'birthday'
 
 const currentPatient = computed(() => store.state.currentPatient);
 const myQuestions = computed(() =>
@@ -185,12 +233,22 @@ const myQuestions = computed(() =>
 
 const selectedDoctor = ref<Doctor | null>(null);
 
-const authForm = reactive({
+const passwordForm = reactive({
+  username: '',
+  password: '',
+});
+
+const birthdayForm = reactive({
   name: '',
   birthday: null as Dayjs | null,
 });
 
-const authRules = {
+const passwordRules = {
+  username: [{ required: true, message: '请输入手机号' }],
+  password: [{ required: true, message: '请输入密码' }],
+};
+
+const birthdayRules = {
   name: [{ required: true, message: '请输入姓名' }],
   birthday: [{ required: true, message: '请选择生日' }],
 };
@@ -212,32 +270,41 @@ const availableDoctors = computed(() => {
 onMounted(() => {
   const doctorUsername = route.params.doctorUsername as string;
   if (doctorUsername) {
-    const doctor = store.getDoctorByUsername(doctorUsername);
-    if (doctor && doctor.isActive) {
-      selectedDoctor.value = doctor;
-      questionForm.doctorId = doctor.id;
-    }
+    store.getDoctorByUsername(doctorUsername).then((doctor) => {
+      if (doctor && doctor.isActive) {
+        selectedDoctor.value = doctor;
+        questionForm.doctorId = doctor.id;
+      }
+    });
   }
 });
 
-const verifyPatient = () => {
-  const birthday = authForm.birthday?.format('YYYY-MM-DD');
+const handlePasswordLogin = async () => {
+  loading.value = true;
+  const patient = await store.loginPatient(passwordForm.username, passwordForm.password);
+  if (patient) {
+    message.success('登录成功');
+  } else {
+    message.error('用户名或密码错误');
+  }
+  loading.value = false;
+};
+
+const handleBirthdayLogin = async () => {
+  const birthday = birthdayForm.birthday?.format('YYYY-MM-DD');
   if (!birthday) {
     message.error('请选择生日');
     return;
   }
-
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
-
-  store.verifyPatient(authForm.name, birthday);
-
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
+  
+  loading.value = true;
+  const patient = await store.verifyPatientByNameAndBirthday(birthdayForm.name, birthday);
+  if (patient) {
+    message.success('验证成功');
   } else {
-    message.success('首次登录,已为您创建账户!');
+    message.error('姓名或生日不匹配');
   }
+  loading.value = false;
 };
 
 const logoutPatient = () => {

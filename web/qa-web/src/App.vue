@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
+import { store } from './store';
+
+onMounted(() => {
+  // 初始化加载医生列表（来源：后端 MySQL）
+  store.loadDoctors().catch(() => {
+    // 页面上再做提示，这里不打断渲染
+  });
+});
 </script>
 
 <template>

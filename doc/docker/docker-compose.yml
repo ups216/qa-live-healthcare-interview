@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: qa-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: qa_live_healthcare
+      MYSQL_USER: qa_user
+      MYSQL_PASSWORD: qa123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3316:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - qa-db-net
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.1
+    container_name: qa-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root123456
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8088:80"
+    networks:
+      - qa-db-net
+
+volumes:
+  mysql_data:
+
+networks:
+  qa-db-net:
+    driver: bridge
