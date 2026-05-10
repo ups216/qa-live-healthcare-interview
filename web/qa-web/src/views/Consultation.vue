@@ -3,19 +3,19 @@
     <div class="consultation-container">
       <div v-if="!currentPatient" class="auth-section">
         <div class="auth-card">
-          <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
+          <h1>患者登录</h1>
+          <p>请输入您的用户名和密码以登录系统</p>
           <a-form
             :model="authForm"
             :rules="authRules"
-            @finish="verifyPatient"
+            @finish="loginPatient"
             layout="vertical"
           >
-            <a-form-item label="姓名" name="name">
+            <a-form-item label="用户名" name="username">
               <a-input
-                v-model:value="authForm.name"
+                v-model:value="authForm.username"
                 size="large"
-                placeholder="请输入您的姓名"
+                placeholder="请输入用户名"
               >
                 <template #prefix>
                   <UserOutlined />
@@ -23,26 +23,28 @@
               </a-input>
             </a-form-item>
 
-            <a-form-item label="生日" name="birthday">
-              <a-date-picker
-                v-model:value="authForm.birthday"
+            <a-form-item label="密码" name="password">
+              <a-input-password
+                v-model:value="authForm.password"
                 size="large"
-                format="YYYY-MM-DD"
-                placeholder="请选择您的生日"
-                style="width: 100%"
-              />
+                placeholder="请输入密码"
+              >
+                <template #prefix>
+                  <LockOutlined />
+                </template>
+              </a-input-password>
             </a-form-item>
 
             <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block>
-                验证身份
+              <a-button type="primary" html-type="submit" size="large" block :loading="loggingIn">
+                登录
               </a-button>
             </a-form-item>
           </a-form>
 
           <a-alert
             message="提示"
-            description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
+            description="使用您在系统中注册的用户名和密码登录。如忘记密码，请联系管理员。"
             type="info"
             show-icon
           />
@@ -169,6 +171,7 @@ import { message } from 'ant-design-vue';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   UserOutlined,
+  LockOutlined,
   LogoutOutlined,
   PlusOutlined
 } from '@ant-design/icons-vue';
@@ -186,13 +189,22 @@ const myQuestions = computed(() =>
 const selectedDoctor = ref<Doctor | null>(null);
 
 const authForm = reactive({
-  name: '',
-  birthday: null as Dayjs | null,
+  username: '',
+  password: '',
 });
 
+const loggingIn = ref(false);
+
 const authRules = {
-  name: [{ required: true, message: '请输入姓名' }],
-  birthday: [{ required: true, message: '请选择生日' }],
+  username: [
+    { required: true, message: '请输入用户名' },
+    { min: 3, max: 50, message: '用户名长度必须在3-50之间' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' }
+  ],
+  password: [
+    { required: true, message: '请输入密码' },
+    { min: 8, max: 128, message: '密码长度必须在8-128之间' }
+  ],
 };
 
 const submitModalVisible = ref(false);
@@ -210,6 +222,31 @@ const availableDoctors = computed(() => {
 });
 
 onMounted(() => {
+  // 检查是否有已保存的登录状态
+  const savedToken = localStorage.getItem('patient_token');
+  const savedUser = localStorage.getItem('patient_user');
+  
+  if (savedToken && savedUser) {
+    try {
+      const user = JSON.parse(savedUser);
+      // 恢复患者信息到store
+      store.state.currentPatient = {
+        id: user.id.toString(),
+        name: user.username,
+        birthday: '',
+        phone: user.phone || '',
+        gender: '',
+      };
+      message.success('已自动登录');
+    } catch (error) {
+      console.error('恢复登录状态失败:', error);
+      // 如果解析失败，清除无效的存储
+      localStorage.removeItem('patient_token');
+      localStorage.removeItem('patient_user');
+    }
+  }
+  
+  // 检查是否有从路由传来的医生信息
   const doctorUsername = route.params.doctorUsername as string;
   if (doctorUsername) {
     const doctor = store.getDoctorByUsername(doctorUsername);
@@ -220,30 +257,64 @@ onMounted(() => {
   }
 });
 
-const verifyPatient = () => {
-  const birthday = authForm.birthday?.format('YYYY-MM-DD');
-  if (!birthday) {
-    message.error('请选择生日');
-    return;
-  }
+const loginPatient = async () => {
+  loggingIn.value = true;
+  
+  try {
+    // 调用后端API进行登录验证
+    const response = await fetch('http://localhost:8080/api/v1/patients/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: authForm.username,
+        password: authForm.password,
+      }),
+    });
 
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
+    const data = await response.json();
 
-  store.verifyPatient(authForm.name, birthday);
-
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
-  } else {
-    message.success('首次登录,已为您创建账户!');
+    if (response.ok && data.code === 200) {
+      // 登录成功，保存Token和用户信息到localStorage
+      localStorage.setItem('patient_token', data.data.token);
+      localStorage.setItem('patient_user', JSON.stringify(data.data.user));
+      
+      // 更新store中的当前患者信息
+      store.state.currentPatient = {
+        id: data.data.user.id.toString(),
+        name: data.data.user.username,
+        birthday: '',
+        phone: data.data.user.phone || '',
+        gender: '',
+      };
+      
+      message.success('登录成功，欢迎回来！');
+    } else {
+      // 登录失败，显示错误消息
+      message.error(data.message || '登录失败，请检查用户名和密码');
+    }
+  } catch (error) {
+    console.error('登录错误:', error);
+    message.error('网络错误，请稍后重试');
+  } finally {
+    loggingIn.value = false;
   }
 };
 
 const logoutPatient = () => {
+  // 清除localStorage中的Token和用户信息
+  localStorage.removeItem('patient_token');
+  localStorage.removeItem('patient_user');
+  
   store.logoutPatient();
   selectedDoctor.value = null;
-  message.success('已切换用户');
+  
+  // 清空表单
+  authForm.username = '';
+  authForm.password = '';
+  
+  message.success('已退出登录');
 };
 
 const clearSelectedDoctor = () => {

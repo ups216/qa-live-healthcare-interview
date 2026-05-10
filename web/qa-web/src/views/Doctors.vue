@@ -6,7 +6,13 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <!-- 空状态 -->
+      <div v-if="allDoctors.length === 0" class="empty-container">
+        <a-spin size="large" tip="加载中..." />
+      </div>
+
+      <!-- 医生列表 -->
+      <div v-else class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -48,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { store, Doctor } from '../store';
 
@@ -59,6 +65,13 @@ const allDoctors = computed(() => store.state.doctors);
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
 };
+
+// 组件挂载时检查数据是否已加载
+onMounted(() => {
+  if (allDoctors.value.length === 0) {
+    console.log('医生数据未加载，等待store自动加载...');
+  }
+});
 </script>
 
 <style scoped>
@@ -92,6 +105,13 @@ const goToConsultation = (doctor: Doctor) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 48px 24px;
+}
+
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
 }
 
 .doctors-grid {

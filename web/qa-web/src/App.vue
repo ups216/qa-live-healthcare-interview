@@ -1,7 +1,16 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
+import { useAuthStore } from './store/auth';
+
+const authStore = useAuthStore();
+
+onMounted(() => {
+  // 初始化认证状态
+  authStore.initAuth();
+});
 </script>
 
 <template>

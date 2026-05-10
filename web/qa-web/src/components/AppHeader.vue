@@ -23,22 +23,54 @@
           关于
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <!-- Language Switcher -->
+        <a-dropdown>
+          <a-button type="text" class="lang-btn">
+            <GlobalOutlined />
+            {{ currentLanguageLabel }}
+            <DownOutlined />
+          </a-button>
+          <template #overlay>
+            <a-menu @click="handleLanguageChange">
+              <a-menu-item key="zh-CN">
+                <span>中文</span>
+              </a-menu-item>
+              <a-menu-item key="en-US">
+                <span>English</span>
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          医生登录
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { useI18n } from 'vue-i18n';
+import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined, GlobalOutlined, DownOutlined } from '@ant-design/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
+const { locale } = useI18n();
 const selectedKeys = ref<string[]>(['home']);
+
+const currentLanguageLabel = computed(() => {
+  return locale.value === 'zh-CN' ? '中文' : 'English';
+});
+
+const handleLanguageChange = ({ key }: { key: string }) => {
+  locale.value = key;
+  localStorage.setItem('locale', key);
+};
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -106,6 +138,26 @@ const navigateTo = (path: string) => {
   border: none;
   margin: 0 40px;
   line-height: 64px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-btn {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.lang-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .login-btn {
