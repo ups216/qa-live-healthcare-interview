@@ -1,20 +1,8 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
+import { message } from 'ant-design-vue';
+import { doctorApi, DoctorDTO } from '../api/doctor';
 import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
-
-export interface Doctor {
-  id: string;
-  username: string;
-  password: string;
-  name: string;
-  title: string;
-  department: string;
-  avatar: string;
-  experience: string;
-  specialties: string[];
-  isActive: boolean;
-}
 
 export interface Patient {
   id: string;
@@ -45,13 +33,41 @@ interface State {
   currentPatient: Patient | null;
 }
 
+// 将后端DTO转换为前端Doctor接口
+export interface Doctor extends Omit<DoctorDTO, 'specialties'> {
+  password?: string; // 后端API不返回password，但前端登录需要
+  specialties: string[];
+}
+
+function convertToDoctor(dto: DoctorDTO): Doctor {
+  return {
+    ...dto,
+    password: '123456', // 默认密码，实际应该从登录获取
+  };
+}
+
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
+  doctors: [],
   patients: patientData as Patient[],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
 });
+
+// 初始化时从API加载医生数据
+async function loadDoctors() {
+  try {
+    const doctors = await doctorApi.getAllDoctors();
+    state.doctors = doctors.map(convertToDoctor);
+    console.log('医生数据加载成功:', state.doctors.length, '条记录');
+  } catch (error) {
+    console.error('加载医生数据失败:', error);
+    message.error('无法加载医生数据，请检查后端服务是否正常运行');
+  }
+}
+
+// 立即执行加载
+loadDoctors();
 
 export const store = {
   state,
