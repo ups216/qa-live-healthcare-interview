@@ -1,0 +1,17 @@
+# Docker
+docker-compose.override.yml
+
+# MySQL data
+mysql_data/
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

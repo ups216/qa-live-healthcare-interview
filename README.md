@@ -1,6 +1,32 @@
 # 面试要求
 
-Fork当前项目到你自己的github账号，并在自己的账号下完成以下操作
+Fork当前项目到你自己的github账号下，并在自己的账号下完成以下操作
+
+## 快速开始 - Docker 环境
+
+### 启动数据库服务
+
+```bash
+# 启动 MySQL 和 phpMyAdmin
+docker-compose up -d
+
+# 或使用管理脚本
+./docker-manager.sh start
+```
+
+### 访问方式
+
+- **phpMyAdmin**: http://localhost:8080
+  - 服务器: mysql
+  - 用户名: qa_user
+  - 密码: qa_password123
+
+- **MySQL**: localhost:3306
+  - 数据库: qa_healthcare
+  - 用户名: qa_user
+  - 密码: qa_password123
+
+详细使用说明请查看 [DOCKER_USAGE.md](DOCKER_USAGE.md)
 
 ## 技术要求
 
