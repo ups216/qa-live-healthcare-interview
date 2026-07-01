@@ -23,22 +23,28 @@
           关于
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <LangSwitcher v-if="isHomePage" />
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          医生登录
+        </a-button>
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import LangSwitcher from './LangSwitcher.vue';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+
+const isHomePage = computed(() => route.path === '/');
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -106,6 +112,14 @@ const navigateTo = (path: string) => {
   border: none;
   margin: 0 40px;
   line-height: 64px;
+  min-width: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .login-btn {

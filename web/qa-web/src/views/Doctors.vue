@@ -6,7 +6,8 @@
     </div>
 
     <div class="doctors-container">
-      <div class="doctors-grid">
+      <a-spin :spinning="store.state.doctorsLoading" tip="加载中...">
+        <div class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
           :key="doctor.id"
@@ -42,7 +43,8 @@
             </a-button>
           </div>
         </a-card>
-      </div>
+        </div>
+      </a-spin>
     </div>
   </div>
 </template>

@@ -1,12 +1,11 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
-import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
+import * as doctorApi from '../api/doctor';
+import * as patientApi from '../api/patient';
 
 export interface Doctor {
   id: string;
   username: string;
-  password: string;
   name: string;
   title: string;
   department: string;
@@ -18,6 +17,7 @@ export interface Doctor {
 
 export interface Patient {
   id: string;
+  username: string;
   name: string;
   birthday: string;
   phone: string;
@@ -39,6 +39,8 @@ export interface Question {
 
 interface State {
   doctors: Doctor[];
+  doctorsLoaded: boolean;
+  doctorsLoading: boolean;
   patients: Patient[];
   questions: Question[];
   currentDoctor: Doctor | null;
@@ -46,8 +48,10 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
-  patients: patientData as Patient[],
+  doctors: [],
+  doctorsLoaded: false,
+  doctorsLoading: false,
+  patients: [],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
@@ -56,39 +60,64 @@ const state = reactive<State>({
 export const store = {
   state,
 
-  loginDoctor(username: string, password: string): Doctor | null {
-    const doctor = state.doctors.find(
-      d => d.username === username && d.password === password
-    );
-    if (doctor) {
-      state.currentDoctor = doctor;
-      return doctor;
+  async fetchDoctors(): Promise<void> {
+    if (state.doctorsLoading) {
+      return;
     }
-    return null;
+    state.doctorsLoading = true;
+    try {
+      state.doctors = await doctorApi.fetchDoctors();
+      state.doctorsLoaded = true;
+    } finally {
+      state.doctorsLoading = false;
+    }
+  },
+
+  async loginDoctor(username: string, password: string): Promise<Doctor | null> {
+    try {
+      const doctor = await doctorApi.loginDoctor(username, password);
+      state.currentDoctor = doctor;
+      const index = state.doctors.findIndex(d => d.id === doctor.id);
+      if (index >= 0) {
+        state.doctors[index] = doctor;
+      } else {
+        state.doctors.push(doctor);
+      }
+      return doctor;
+    } catch {
+      return null;
+    }
   },
 
   logoutDoctor() {
     state.currentDoctor = null;
   },
 
-  verifyPatient(name: string, birthday: string): Patient {
-    let patient = state.patients.find(
-      p => p.name === name && p.birthday === birthday
-    );
-
-    if (!patient) {
-      patient = {
-        id: `patient${Date.now()}`,
-        name,
-        birthday,
-        phone: '',
-        gender: '',
-      };
-      state.patients.push(patient);
+  async loginPatient(username: string, password: string): Promise<Patient | null> {
+    try {
+      const patient = await patientApi.loginPatient(username, password);
+      state.currentPatient = patient;
+      const index = state.patients.findIndex(p => p.id === patient.id);
+      if (index >= 0) {
+        state.patients[index] = patient;
+      } else {
+        state.patients.push(patient);
+      }
+      return patient;
+    } catch {
+      return null;
     }
+  },
 
-    state.currentPatient = patient;
-    return patient;
+  async registerPatient(payload: patientApi.PatientRegisterPayload): Promise<Patient | null> {
+    try {
+      const patient = await patientApi.registerPatient(payload);
+      state.currentPatient = patient;
+      state.patients.push(patient);
+      return patient;
+    } catch {
+      return null;
+    }
   },
 
   logoutPatient() {
