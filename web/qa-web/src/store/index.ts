@@ -1,7 +1,7 @@
 import { reactive } from 'vue';
-import doctorData from '../data/doctor-user-list.json';
-import patientData from '../data/patient-user.json';
 import questionData from '../data/question-list.json';
+
+const API_BASE_URL = 'http://localhost:8080/api';
 
 export interface Doctor {
   id: string;
@@ -18,10 +18,18 @@ export interface Doctor {
 
 export interface Patient {
   id: string;
+  username: string;
   name: string;
-  birthday: string;
-  phone: string;
-  gender: string;
+  phone?: string;
+  gender?: string;
+  birthday?: string;
+}
+
+export interface RegisterData {
+  username: string;
+  password: string;
+  name: string;
+  phone?: string;
 }
 
 export interface Question {
@@ -46,8 +54,8 @@ interface State {
 }
 
 const state = reactive<State>({
-  doctors: doctorData as Doctor[],
-  patients: patientData as Patient[],
+  doctors: [],
+  patients: [],
   questions: questionData as Question[],
   currentDoctor: null,
   currentPatient: null,
@@ -56,13 +64,68 @@ const state = reactive<State>({
 export const store = {
   state,
 
-  loginDoctor(username: string, password: string): Doctor | null {
-    const doctor = state.doctors.find(
-      d => d.username === username && d.password === password
-    );
-    if (doctor) {
-      state.currentDoctor = doctor;
-      return doctor;
+  async fetchDoctors() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/doctors`);
+      if (response.ok) {
+        const data = await response.json();
+        state.doctors = data.map((d: any) => ({
+          id: d.id,
+          username: d.username,
+          password: d.password,
+          name: d.name,
+          title: d.title,
+          department: d.department,
+          avatar: d.avatar,
+          experience: d.experience,
+          specialties: d.specialties || [],
+          isActive: d.isActive ?? d.is_active
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error);
+    }
+  },
+
+  async fetchActiveDoctors() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/doctors/active`);
+      if (response.ok) {
+        const data = await response.json();
+        state.doctors = data.map((d: any) => ({
+          id: d.id,
+          username: d.username,
+          password: d.password,
+          name: d.name,
+          title: d.title,
+          department: d.department,
+          avatar: d.avatar,
+          experience: d.experience,
+          specialties: d.specialties || [],
+          isActive: d.isActive ?? d.is_active
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch active doctors:', error);
+    }
+  },
+
+  async loginDoctor(username: string, password: string): Promise<Doctor | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/doctors/${username}`);
+      if (response.ok) {
+        const doctor = await response.json();
+        if (doctor && doctor.password === password) {
+          const mappedDoctor = {
+            ...doctor,
+            isActive: doctor.isActive ?? doctor.is_active
+          };
+          state.currentDoctor = mappedDoctor;
+          return mappedDoctor;
+        }
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
     }
     return null;
   },
@@ -71,28 +134,63 @@ export const store = {
     state.currentDoctor = null;
   },
 
-  verifyPatient(name: string, birthday: string): Patient {
-    let patient = state.patients.find(
-      p => p.name === name && p.birthday === birthday
-    );
+  async loginPatient(username: string, password: string): Promise<Patient | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/patients/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (!patient) {
-      patient = {
-        id: `patient${Date.now()}`,
-        name,
-        birthday,
-        phone: '',
-        gender: '',
-      };
-      state.patients.push(patient);
+      if (response.ok) {
+        const patient = await response.json();
+        state.currentPatient = patient;
+        localStorage.setItem('currentPatient', JSON.stringify(patient));
+        return patient;
+      }
+    } catch (error) {
+      console.error('Patient login failed:', error);
     }
+    return null;
+  },
 
-    state.currentPatient = patient;
-    return patient;
+  async registerPatient(data: RegisterData): Promise<Patient | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/patients/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const patient = await response.json();
+        state.currentPatient = patient;
+        localStorage.setItem('currentPatient', JSON.stringify(patient));
+        return patient;
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || '注册失败');
+      }
+    } catch (error) {
+      console.error('Patient register failed:', error);
+      throw error;
+    }
+  },
+
+  restorePatient() {
+    const stored = localStorage.getItem('currentPatient');
+    if (stored) {
+      try {
+        state.currentPatient = JSON.parse(stored);
+      } catch (e) {
+        localStorage.removeItem('currentPatient');
+      }
+    }
   },
 
   logoutPatient() {
     state.currentPatient = null;
+    localStorage.removeItem('currentPatient');
   },
 
   getQuestionsByDoctor(doctorId: string): Question[] {
