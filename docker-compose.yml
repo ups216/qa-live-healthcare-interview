@@ -1,0 +1,61 @@
+# QA Live Healthcare - 本地基础设施
+#
+# 用途：为 qa-service-user 提供 MySQL 8 数据库，并挂接 phpMyAdmin 作为管理界面。
+# 启动：docker compose up -d
+# 停止：docker compose down        （保留数据卷）
+#       docker compose down -v     （连同数据卷删除，下次启动会重新执行 init SQL）
+#
+# 注意：init SQL 仅在数据卷为空的首次启动时执行。若修改了 db/init/*.sql，
+#       需要先 `docker compose down -v` 再 `up -d` 才会重新生效。
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: qa-live-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: qa_live
+      MYSQL_ROOT_HOST: '%'
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # depends_on 的 service_healthy 依赖此探针。
+      # 仅写 depends_on 而不带 condition 只能保证容器"已启动"，无法保证 MySQL 可接受连接，
+      # 那是 Spring Boot 首启报 Communications link failure 的头号原因。
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - qa-live-net
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: qa-live-phpmyadmin
+    ports:
+      - "8088:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - qa-live-net
+
+volumes:
+  mysql-data:
+
+networks:
+  qa-live-net:
+    driver: bridge

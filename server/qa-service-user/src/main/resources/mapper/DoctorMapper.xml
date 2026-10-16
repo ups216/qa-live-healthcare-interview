@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  医生 SQL 映射。
+
+  文件位置说明（重要）：本文件必须位于 resources/mapper/ 下。
+  Maven 默认不会把 src/main/java 目录下的 XML 打包进 classpath，
+  放在 resources 下可直接被 mybatis.mapper-locations=classpath*:/mapper/**/*.xml 命中，
+  无需在 pom.xml 中额外配置 <resources>，规避 Invalid bound statement 问题。
+-->
+<mapper namespace="com.leansofx.qaserviceuser.mapper.DoctorMapper">
+
+    <!-- specialties 为 JSON 列，必须显式声明 typeHandler，否则 MyBatis 会把 JSON 串直接赋给 List 属性而报错 -->
+    <resultMap id="DoctorResultMap" type="com.leansofx.qaserviceuser.entity.Doctor">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="name" property="name"/>
+        <result column="title" property="title"/>
+        <result column="department" property="department"/>
+        <result column="avatar" property="avatar"/>
+        <result column="experience" property="experience"/>
+        <result column="specialties" property="specialties"
+                typeHandler="com.leansofx.qaserviceuser.handler.JsonStringListTypeHandler"/>
+        <!-- is_active 经 map-underscore-to-camel-case 映射为 isActive -->
+        <result column="is_active" property="isActive"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, username, password, name, title, department, avatar, experience, specialties, is_active
+    </sql>
+
+    <select id="selectAll" resultMap="DoctorResultMap">
+        SELECT
+        <include refid="BaseColumns"/>
+        FROM t_doctor
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectActive" resultMap="DoctorResultMap">
+        SELECT
+        <include refid="BaseColumns"/>
+        FROM t_doctor
+        WHERE is_active = 1
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectById" resultMap="DoctorResultMap">
+        SELECT
+        <include refid="BaseColumns"/>
+        FROM t_doctor
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByUsername" resultMap="DoctorResultMap">
+        SELECT
+        <include refid="BaseColumns"/>
+        FROM t_doctor
+        WHERE username = #{username}
+    </select>
+
+</mapper>

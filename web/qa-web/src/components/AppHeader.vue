@@ -23,22 +23,50 @@
           关于
         </a-menu-item>
       </a-menu>
-      <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
-        <UserOutlined />
-        医生登录
-      </a-button>
+      <div class="header-actions">
+        <!-- 需求3：已登录时显示患者名 + 退出；未登录时显示登录入口 -->
+        <div v-if="currentPatient" class="patient-entry">
+          <span class="patient-name">{{ currentPatient.name }}</span>
+          <a-button size="small" @click="handleLogout">退出</a-button>
+        </div>
+        <a-button v-else size="small" class="patient-btn" @click="navigateTo('/patient/login')">
+          用户登录
+        </a-button>
+
+        <a-button type="primary" class="login-btn" @click="navigateTo('/doctor/login')">
+          <UserOutlined />
+          医生登录
+        </a-button>
+        <!-- 需求1：语言切换下拉，置于页面最右上角 -->
+        <LangSwitcher />
+      </div>
     </div>
   </a-layout-header>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { message } from 'ant-design-vue';
 import { HomeOutlined, MessageOutlined, TeamOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons-vue';
+import LangSwitcher from './LangSwitcher.vue';
+import { store } from '../store';
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref<string[]>(['home']);
+
+// 需求3：头部展示当前登录的问诊用户
+const currentPatient = computed(() => store.state.currentPatient);
+
+function handleLogout() {
+  store.logoutPatient();
+  message.success('已退出登录');
+  // 退出后若在需要登录的页面，回到首页，避免停留在无权限视图
+  if (route.path.startsWith('/consultation')) {
+    router.push('/');
+  }
+}
 
 watch(() => route.path, (newPath) => {
   if (newPath === '/') {
@@ -111,6 +139,42 @@ const navigateTo = (path: string) => {
 .login-btn {
   background: #52c41a;
   border-color: #52c41a;
+  flex: none;
+}
+
+/* 包裹"医生登录"与语言切换器，统一控制右侧间距 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+.patient-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.patient-name {
+  font-size: 14px;
+  color: #333;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patient-btn {
+  flex: none;
+}
+
+/* 窄屏优先保住语言切换器与医生登录，隐去患者名只留退出按钮 */
+@media (max-width: 900px) {
+  .patient-name {
+    display: none;
+  }
 }
 
 .login-btn:hover {

@@ -1,0 +1,32 @@
+# 依赖与构建产物
+node_modules/
+dist/
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# 日志
+*.log
+logs/
+
+# 编辑器 / 系统
+.DS_Store
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# 本地环境变量
+.env.local
+.env.*.local
+
+# AI 工具本地数据（非缓存，但属于本地工作数据，不应入库）
+.codebuddy/
+
+# 测试与调试产物
+.playwright-cli/
+*.tsbuildinfo
+# playwright 浏览器快照（自动化验证中间产物）
+login.yaml
+qa-web/login.yaml

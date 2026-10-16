@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  问诊用户（患者）SQL 映射（需求3：PATIENT-AUTH-001）。
+
+  与 DoctorMapper.xml 同理，本文件须位于 resources/mapper/ 下才能被
+  mybatis.mapper-locations=classpath*:/mapper/**/*.xml 扫描到。
+-->
+<mapper namespace="com.leansofx.qaserviceuser.mapper.PatientMapper">
+
+    <resultMap id="PatientResultMap" type="com.leansofx.qaserviceuser.entity.Patient">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="name" property="name"/>
+        <result column="birthday" property="birthday"/>
+        <result column="phone" property="phone"/>
+        <result column="gender" property="gender"/>
+    </resultMap>
+
+    <!-- 主键由应用层生成，不依赖数据库自增，便于将来分库分表 -->
+    <insert id="insert" parameterType="com.leansofx.qaserviceuser.entity.Patient">
+        INSERT INTO t_patient
+            (id, username, password, name, birthday, phone, gender)
+        VALUES
+            (#{id}, #{username}, #{password}, #{name}, #{birthday}, #{phone}, #{gender})
+    </insert>
+
+    <select id="selectByUsername" resultMap="PatientResultMap">
+        SELECT id, username, password, name, birthday, phone, gender
+        FROM t_patient
+        WHERE username = #{username}
+    </select>
+
+    <select id="selectById" resultMap="PatientResultMap">
+        SELECT id, username, password, name, birthday, phone, gender
+        FROM t_patient
+        WHERE id = #{id}
+    </select>
+
+</mapper>

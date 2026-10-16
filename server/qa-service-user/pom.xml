@@ -45,6 +45,68 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Bean Validation：DTO 上的 @NotBlank / @Size 需要此 starter，
+		     配合 @Valid 与 GlobalExceptionHandler 输出统一的参数校验错误 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
+		<!-- 需求2：持久层（MyBatis XML） -->
+		<!-- 版本说明：仓库已有 4.0.x 线，但其要求 Spring Boot 4.x，与本项目 3.5.7 不兼容，
+		     故锁定 3.x 线的最新版本 3.0.5。详见 docs/IMPLEMENTATION_PLAN.md §2.4 -->
+		<dependency>
+			<groupId>org.mybatis.spring.boot</groupId>
+			<artifactId>mybatis-spring-boot-starter</artifactId>
+			<version>3.0.5</version>
+		</dependency>
+
+		<!-- MySQL 驱动：版本由 spring-boot-starter-parent 的 dependency management 纳管 -->
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- 需求3：密码加密。仅引入 crypto 模块，避免引入完整 Spring Security
+		     （后者会带来默认登录页与 CSRF，干扰既有裸接口） -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+		</dependency>
+
+		<!-- 需求3：JWT。三个依赖版本必须严格一致（0.12.7）。
+		     注意：0.12.x 与 0.11.x API 完全不同，详见 DESIGN-patient-auth.md §8 N1 -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.7</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.7</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.12.7</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- 测试期容器支持 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

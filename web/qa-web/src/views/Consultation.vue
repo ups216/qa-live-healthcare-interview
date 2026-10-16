@@ -1,51 +1,25 @@
 <template>
   <div class="consultation">
     <div class="consultation-container">
+      <!--
+        未登录时的引导卡片。
+        需求3 之后不再在此处做"姓名+生日"验证（旧实现是"查不到就自动建档"，
+        任何人都能凭任意姓名生日获得账户）；改由统一的账号密码登录，
+        配合路由守卫：未登录访问本页会被重定向到 /patient/login。
+        这里保留一份引导，覆盖用户手动清除 token 等守卫之外的场景。
+      -->
       <div v-if="!currentPatient" class="auth-section">
         <div class="auth-card">
-          <h1>患者身份验证</h1>
-          <p>请输入您的姓名和生日以验证身份</p>
-          <a-form
-            :model="authForm"
-            :rules="authRules"
-            @finish="verifyPatient"
-            layout="vertical"
-          >
-            <a-form-item label="姓名" name="name">
-              <a-input
-                v-model:value="authForm.name"
-                size="large"
-                placeholder="请输入您的姓名"
-              >
-                <template #prefix>
-                  <UserOutlined />
-                </template>
-              </a-input>
-            </a-form-item>
-
-            <a-form-item label="生日" name="birthday">
-              <a-date-picker
-                v-model:value="authForm.birthday"
-                size="large"
-                format="YYYY-MM-DD"
-                placeholder="请选择您的生日"
-                style="width: 100%"
-              />
-            </a-form-item>
-
-            <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block>
-                验证身份
+          <h1>请先登录</h1>
+          <p>登录后即可向医生提问并查看您的问诊记录</p>
+          <a-result status="info" :title="''" :sub-title="''">
+            <template #extra>
+              <a-button type="primary" size="large" @click="goToLogin">
+                <UserOutlined />
+                去登录 / 注册
               </a-button>
-            </a-form-item>
-          </a-form>
-
-          <a-alert
-            message="提示"
-            description="输入任意姓名和生日即可使用。首次输入会自动创建账户,再次输入相同信息即可登录。"
-            type="info"
-            show-icon
-          />
+            </template>
+          </a-result>
         </div>
       </div>
 
@@ -163,10 +137,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, reactive, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import {
   UserOutlined,
   LogoutOutlined,
@@ -175,6 +149,7 @@ import {
 import { store, Doctor } from '../store';
 
 const route = useRoute();
+const router = useRouter();
 
 const currentPatient = computed(() => store.state.currentPatient);
 const myQuestions = computed(() =>
@@ -184,16 +159,6 @@ const myQuestions = computed(() =>
 );
 
 const selectedDoctor = ref<Doctor | null>(null);
-
-const authForm = reactive({
-  name: '',
-  birthday: null as Dayjs | null,
-});
-
-const authRules = {
-  name: [{ required: true, message: '请输入姓名' }],
-  birthday: [{ required: true, message: '请选择生日' }],
-};
 
 const submitModalVisible = ref(false);
 const submitting = ref(false);
@@ -209,41 +174,54 @@ const availableDoctors = computed(() => {
     : store.getActiveDoctors();
 });
 
-onMounted(() => {
-  const doctorUsername = route.params.doctorUsername as string;
-  if (doctorUsername) {
-    const doctor = store.getDoctorByUsername(doctorUsername);
-    if (doctor && doctor.isActive) {
-      selectedDoctor.value = doctor;
-      questionForm.doctorId = doctor.id;
-    }
-  }
-});
-
-const verifyPatient = () => {
-  const birthday = authForm.birthday?.format('YYYY-MM-DD');
-  if (!birthday) {
-    message.error('请选择生日');
+/**
+ * 依据路由参数解析当前选中的医生。
+ *
+ * 修复的竞态：原实现只在 onMounted 里**一次性同步**读取 store.getDoctorByUsername()，
+ * 而需求2 之后 doctors 由后端异步加载 —— 首屏直接打开 /consultation/:doctorUsername 时
+ * 数据尚未就绪，selectedDoctor 会静默拿不到（页面不报错，但退化成未选中医生的下拉态）。
+ *
+ * 现在改为 computed + watch 两条保障：
+ * - watch(route.params)：解决同一组件被两条路由复用、参数变化时不重新挂载的问题；
+ * - computed 依赖 store.state.doctors：数据到位后自动重新求值，无需关心加载时序。
+ */
+const resolveSelectedDoctor = (username: string | undefined) => {
+  selectedDoctor.value = null;
+  questionForm.doctorId = '';
+  if (!username) {
     return;
   }
-
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
-
-  store.verifyPatient(authForm.name, birthday);
-
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
-  } else {
-    message.success('首次登录,已为您创建账户!');
+  const doctor = store.getDoctorByUsername(username);
+  if (doctor && doctor.isActive) {
+    selectedDoctor.value = doctor;
+    questionForm.doctorId = doctor.id;
   }
+};
+
+// 随 doctors 数据到位自动生效（覆盖首屏直开、等待加载完成的场景）
+watch(
+  () => store.state.doctors,
+  () => resolveSelectedDoctor(route.params.doctorUsername as string | undefined),
+  { immediate: true }
+);
+
+// 随路由参数变化生效（覆盖同一组件复用时的:doctorUsername变更）
+watch(
+  () => route.params.doctorUsername,
+  (username) => resolveSelectedDoctor(username as string | undefined)
+);
+
+// 初始挂载与路由参数变化均已由上面两个 watch 覆盖，此处无需再写 onMounted。
+
+/** 跳转登录页，并带上当前路径以便登录后回到原页面 */
+const goToLogin = () => {
+  router.push({ name: 'PatientLogin', query: { redirect: route.fullPath } });
 };
 
 const logoutPatient = () => {
   store.logoutPatient();
   selectedDoctor.value = null;
-  message.success('已切换用户');
+  message.success('已退出登录');
 };
 
 const clearSelectedDoctor = () => {
