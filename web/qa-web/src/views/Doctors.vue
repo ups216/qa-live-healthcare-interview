@@ -6,6 +6,8 @@
     </div>
 
     <div class="doctors-container">
+      <div v-if="loading" class="list-tip">加载中...</div>
+      <div v-else-if="error" class="list-tip error">{{ error }}</div>
       <div class="doctors-grid">
         <a-card
           v-for="doctor in allDoctors"
@@ -48,13 +50,42 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { store, Doctor } from '../store';
+
+interface Doctor {
+  id: string;
+  username: string;
+  name: string;
+  title: string;
+  department: string;
+  avatar: string;
+  experience: string;
+  specialties: string[];
+  isActive: boolean;
+}
 
 const router = useRouter();
 
-const allDoctors = computed(() => store.state.doctors);
+const allDoctors = ref<Doctor[]>([]);
+const loading = ref(false);
+const error = ref('');
+
+onMounted(async () => {
+  loading.value = true;
+  try {
+    const response = await fetch('/api/doctors');
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    allDoctors.value = await response.json();
+  } catch (e) {
+    error.value = '加载医生列表失败，请确认后端 qa-service-user 已启动并已连接数据库';
+    console.error(e);
+  } finally {
+    loading.value = false;
+  }
+});
 
 const goToConsultation = (doctor: Doctor) => {
   router.push(`/consultation/${doctor.username}`);
@@ -98,6 +129,17 @@ const goToConsultation = (doctor: Doctor) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
+}
+
+.list-tip {
+  text-align: center;
+  padding: 48px 0;
+  font-size: 16px;
+  color: #666;
+}
+
+.list-tip.error {
+  color: #f5222d;
 }
 
 .doctor-card {

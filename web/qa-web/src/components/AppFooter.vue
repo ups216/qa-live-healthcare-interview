@@ -3,40 +3,43 @@
     <div class="footer-content">
       <div class="footer-section">
         <h3>QA Live Healthcare</h3>
-        <p>专业的在线医疗问诊平台</p>
-        <p>为您提供便捷、专业的医疗咨询服务</p>
+        <p>{{ t('footer.brand.desc1') }}</p>
+        <p>{{ t('footer.brand.desc2') }}</p>
       </div>
       <div class="footer-section">
-        <h4>快速链接</h4>
+        <h4>{{ t('footer.quickLinks') }}</h4>
         <ul>
-          <li><a href="/">首页</a></li>
-          <li><a href="/consultation">问诊</a></li>
-          <li><a href="/doctors">医生团队</a></li>
-          <li><a href="/about">关于我们</a></li>
+          <li><a href="/">{{ t('footer.link.home') }}</a></li>
+          <li><a href="/consultation">{{ t('footer.link.consultation') }}</a></li>
+          <li><a href="/doctors">{{ t('footer.link.doctors') }}</a></li>
+          <li><a href="/about">{{ t('footer.link.about') }}</a></li>
         </ul>
       </div>
       <div class="footer-section">
-        <h4>联系我们</h4>
-        <p>客服热线: 400-123-4567</p>
-        <p>服务时间: 周一至周日 8:00-22:00</p>
-        <p>邮箱: service@qalive.com</p>
+        <h4>{{ t('footer.contact') }}</h4>
+        <p>{{ t('footer.contact.hotline') }}: 400-123-4567</p>
+        <p>{{ t('footer.contact.hours') }}</p>
+        <p>{{ t('footer.contact.email') }}: service@qalive.com</p>
       </div>
       <div class="footer-section">
-        <h4>法律信息</h4>
+        <h4>{{ t('footer.legal') }}</h4>
         <ul>
-          <li><a href="#">隐私政策</a></li>
-          <li><a href="#">服务条款</a></li>
-          <li><a href="#">医疗免责声明</a></li>
+          <li><a href="#">{{ t('footer.legal.privacy') }}</a></li>
+          <li><a href="#">{{ t('footer.legal.terms') }}</a></li>
+          <li><a href="#">{{ t('footer.legal.disclaimer') }}</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2025 QA Live Healthcare. All rights reserved.</p>
+      <p>{{ t('footer.copyright') }}</p>
     </div>
   </a-layout-footer>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from '../locales';
+
+const { t } = useI18n();
 </script>
 
 <style scoped>

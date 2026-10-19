@@ -59,7 +59,7 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue';
-import { store } from '../store';
+import { store, Doctor } from '../store';
 
 const router = useRouter();
 const loading = ref(false);
@@ -77,18 +77,53 @@ const rules = {
 const onFinish = async () => {
   loading.value = true;
 
-  setTimeout(() => {
-    const doctor = store.loginDoctor(formState.username, formState.password);
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'doctor',
+        username: formState.username,
+        password: formState.password,
+      }),
+    });
 
-    if (doctor) {
-      message.success('登录成功');
-      router.push(`/doctor/room/${doctor.username}`);
-    } else {
-      message.error('用户名或密码错误');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      message.error((err as { message?: string }).message || '用户名或密码错误');
+      loading.value = false;
+      return;
     }
 
+    const data = await res.json();
+    // 持久化登录态（供后续受保护接口携带）
+    localStorage.setItem('qa_token', data.token);
+    localStorage.setItem('qa_role', data.role);
+
+    // 用本地医生数据补全展示信息（avatar/title/department 等），id 与 name 以服务端为准
+    const localDoc = store.getDoctorByUsername(formState.username);
+    const doctor: Doctor = localDoc ?? {
+      id: data.user.id,
+      username: data.user.username,
+      name: data.user.name,
+      password: '',
+      title: '',
+      department: '',
+      avatar: '',
+      experience: '',
+      specialties: [],
+      isActive: true,
+    };
+    store.setCurrentDoctor(doctor);
+
+    message.success('登录成功');
+    router.push(`/doctor/room/${data.user.username}`);
+  } catch (e) {
+    console.error(e);
+    message.error('服务异常,请确认后端 qa-service-user 已启动');
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 </script>
 

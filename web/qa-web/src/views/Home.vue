@@ -1,29 +1,44 @@
 <template>
   <div class="home">
+    <div class="lang-switcher">
+      <a-dropdown trigger="click" placement="bottomRight">
+        <a-button>
+          <GlobalOutlined />
+          {{ currentLocale === 'zh' ? t('home.lang.zh') : t('home.lang.en') }}
+        </a-button>
+        <template #overlay>
+          <a-menu @click="handleLangChange">
+            <a-menu-item key="zh">{{ t('home.lang.zh') }}</a-menu-item>
+            <a-menu-item key="en">{{ t('home.lang.en') }}</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
+
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ t('home.title') }}</h1>
+        <p class="hero-subtitle">{{ t('home.subtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ t('home.feature.team') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ t('home.feature.online') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ t('home.feature.privacy') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ t('home.btn.consult') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ t('home.btn.doctors') }}
           </a-button>
         </div>
       </div>
@@ -38,8 +53,8 @@
           <TeamOutlined />
         </div>
         <div class="stat-info">
-          <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+        <h3>{{ statistics.totalDoctors }}</h3>
+        <p>{{ t('home.stat.doctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -47,8 +62,8 @@
           <FileTextOutlined />
         </div>
         <div class="stat-info">
-          <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+        <h3>{{ statistics.totalQuestions }}</h3>
+        <p>{{ t('home.stat.questions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -56,8 +71,8 @@
           <ClockCircleOutlined />
         </div>
         <div class="stat-info">
-          <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+        <h3>{{ statistics.activeSessions }}</h3>
+        <p>{{ t('home.stat.active') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -65,15 +80,15 @@
           <UserOutlined />
         </div>
         <div class="stat-info">
-          <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+        <h3>{{ statistics.totalSessions }}</h3>
+        <p>{{ t('home.stat.sessions') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ t('home.rooms.title') }}</h2>
+      <p class="section-subtitle">{{ t('home.rooms.subtitle') }}</p>
       <div class="rooms-grid">
         <div
           v-for="doctor in activeDoctors"
@@ -83,20 +98,20 @@
         >
           <div class="room-header">
             <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <a-badge status="processing" :text="t('home.badge.online')" />
           </div>
           <div class="room-body">
-            <h3>{{ doctor.name }}</h3>
-            <p class="doctor-title">{{ doctor.title }} · {{ doctor.department }}</p>
-            <p class="doctor-experience">{{ doctor.experience }}</p>
+            <h3>{{ translateDoctorName(doctor.name) }}</h3>
+            <p class="doctor-title">{{ translateDoctorField(doctor.title) }} · {{ translateDoctorField(doctor.department) }}</p>
+            <p class="doctor-experience">{{ translateExperience(doctor.experience) }}</p>
             <div class="doctor-specialties">
-              <a-tag v-for="specialty in doctor.specialties" :key="specialty" color="blue">
-                {{ specialty }}
+              <a-tag v-for="specialty in doctor.specialties" :key="translateDoctorField(specialty)" color="blue">
+                {{ translateDoctorField(specialty) }}
               </a-tag>
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ t('home.room.enter') }}</a-button>
           </div>
         </div>
       </div>
@@ -105,10 +120,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { store } from '../store';
+import { useI18n, translateDoctorField, translateExperience, translateDoctorName } from '../locales';
 import {
+  GlobalOutlined,
   CheckCircleOutlined,
   TeamOutlined,
   FileTextOutlined,
@@ -116,19 +133,69 @@ import {
   UserOutlined
 } from '@ant-design/icons-vue';
 
-const router = useRouter();
+interface Doctor {
+  id: string;
+  username: string;
+  name: string;
+  title: string;
+  department: string;
+  avatar: string;
+  experience: string;
+  specialties: string[];
+  isActive: boolean;
+}
 
-const statistics = computed(() => store.getStatistics());
-const activeDoctors = computed(() => store.getActiveDoctors());
+const router = useRouter();
+const { t, currentLocale, setLocale } = useI18n();
+
+const activeDoctors = ref<Doctor[]>([]);
+const statistics = ref({
+  totalDoctors: 0,
+  totalQuestions: 0,
+  activeSessions: 0,
+  totalSessions: 0,
+});
+
+onMounted(async () => {
+  // 医生数据与「专业医生 / 在线诊室」统计复用现有接口 /api/doctors
+  try {
+    const response = await fetch('/api/doctors');
+    if (response.ok) {
+      const all: Doctor[] = await response.json();
+      const active = all.filter((d) => d.isActive);
+      activeDoctors.value = active;
+      statistics.value.totalDoctors = all.length;
+      statistics.value.totalSessions = active.length;
+    }
+  } catch (e) {
+    console.error('加载医生数据失败', e);
+  }
+  // 问题总数 / 待响应问题：后端暂无 question 接口，暂保留本地数据（待需求3补充接口）
+  statistics.value.totalQuestions = store.state.questions.length;
+  statistics.value.activeSessions = store.state.questions.filter(
+    (q) => q.status === 'pending'
+  ).length;
+});
 
 const navigateTo = (path: string) => {
   router.push(path);
+};
+
+const handleLangChange = ({ key }: { key: string }) => {
+  setLocale(key as 'zh' | 'en');
 };
 </script>
 
 <style scoped>
 .home {
   padding-top: 64px;
+}
+
+.lang-switcher {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 1001;
 }
 
 .hero {

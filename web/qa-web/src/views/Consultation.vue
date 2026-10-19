@@ -220,23 +220,43 @@ onMounted(() => {
   }
 });
 
-const verifyPatient = () => {
+const verifyPatient = async () => {
   const birthday = authForm.birthday?.format('YYYY-MM-DD');
   if (!birthday) {
     message.error('请选择生日');
     return;
   }
 
-  const existingPatientCount = store.state.patients.filter(
-    p => p.name === authForm.name && p.birthday === birthday
-  ).length;
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'patient', name: authForm.name, birthday }),
+    });
 
-  store.verifyPatient(authForm.name, birthday);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      message.error((err as { message?: string }).message || '验证失败');
+      return;
+    }
 
-  if (existingPatientCount > 0) {
-    message.success('验证成功,欢迎回来!');
-  } else {
-    message.success('首次登录,已为您创建账户!');
+    const data = await res.json();
+    // 持久化登录态（供后续受保护接口携带 Authorization 头）
+    localStorage.setItem('qa_token', data.token);
+    localStorage.setItem('qa_role', data.role);
+
+    store.setCurrentPatient({
+      id: data.user.id,
+      name: data.user.name,
+      birthday,
+      phone: '',
+      gender: '',
+    });
+
+    message.success('验证成功,欢迎使用!');
+  } catch (e) {
+    console.error(e);
+    message.error('服务异常,请确认后端 qa-service-user 已启动');
   }
 };
 

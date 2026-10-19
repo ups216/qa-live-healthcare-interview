@@ -67,6 +67,10 @@ export const store = {
     return null;
   },
 
+  setCurrentDoctor(doctor: Doctor) {
+    state.currentDoctor = doctor;
+  },
+
   logoutDoctor() {
     state.currentDoctor = null;
   },
@@ -89,6 +93,10 @@ export const store = {
 
     state.currentPatient = patient;
     return patient;
+  },
+
+  setCurrentPatient(patient: Patient) {
+    state.currentPatient = patient;
   },
 
   logoutPatient() {
