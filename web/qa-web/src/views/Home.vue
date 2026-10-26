@@ -1,29 +1,45 @@
 <template>
   <div class="home">
+    <!-- 语言切换 -->
+    <div class="lang-switch">
+      <a-dropdown>
+        <a-button size="small">
+          <GlobalOutlined />
+          {{ locale === 'zh' ? '中文' : 'English' }}
+        </a-button>
+        <template #overlay>
+          <a-menu @click="changeLanguage">
+            <a-menu-item key="zh">中文</a-menu-item>
+            <a-menu-item key="en">English</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
+
     <section class="hero">
       <div class="hero-content">
-        <h1>专业在线医疗问诊平台</h1>
-        <p class="hero-subtitle">连接专业医生与患者,提供便捷、高效的医疗咨询服务</p>
+        <h1>{{ $t('home.title') }}</h1>
+        <p class="hero-subtitle">{{ $t('home.subtitle') }}</p>
         <div class="hero-features">
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>专业医生团队</span>
+            <span>{{ $t('home.feature1') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>实时在线问诊</span>
+            <span>{{ $t('home.feature2') }}</span>
           </div>
           <div class="feature-item">
             <CheckCircleOutlined class="feature-icon" />
-            <span>隐私安全保护</span>
+            <span>{{ $t('home.feature3') }}</span>
           </div>
         </div>
         <div class="hero-actions">
           <a-button type="primary" size="large" @click="navigateTo('/consultation')">
-            立即问诊
+            {{ $t('home.btnConsult') }}
           </a-button>
           <a-button size="large" @click="navigateTo('/doctors')">
-            查看医生
+            {{ $t('home.btnDoctors') }}
           </a-button>
         </div>
       </div>
@@ -38,8 +54,8 @@
           <TeamOutlined />
         </div>
         <div class="stat-info">
-          <h3>{{ statistics.totalDoctors }}</h3>
-          <p>专业医生</p>
+          <h3>{{ doctors.length }}</h3>
+          <p>{{ $t('home.statDoctors') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -48,7 +64,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.totalQuestions }}</h3>
-          <p>问题总数</p>
+          <p>{{ $t('home.statQuestions') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -57,7 +73,7 @@
         </div>
         <div class="stat-info">
           <h3>{{ statistics.activeSessions }}</h3>
-          <p>待响应问题</p>
+          <p>{{ $t('home.statPending') }}</p>
         </div>
       </div>
       <div class="stat-card">
@@ -65,38 +81,38 @@
           <UserOutlined />
         </div>
         <div class="stat-info">
-          <h3>{{ statistics.totalSessions }}</h3>
-          <p>在线诊室</p>
+          <h3>{{ activeDoctors.length }}</h3>
+          <p>{{ $t('home.statRooms') }}</p>
         </div>
       </div>
     </section>
 
     <section class="active-rooms">
-      <h2>开放诊室</h2>
-      <p class="section-subtitle">以下医生诊室正在开放,欢迎咨询</p>
+      <h2>{{ $t('home.roomsTitle') }}</h2>
+      <p class="section-subtitle">{{ $t('home.roomsSubtitle') }}</p>
       <div class="rooms-grid">
         <div
-          v-for="doctor in activeDoctors"
-          :key="doctor.id"
-          class="room-card"
-          @click="navigateTo(`/consultation/${doctor.username}`)"
+            v-for="doctor in activeDoctors"
+            :key="doctor.id"
+            class="room-card"
+            @click="navigateTo(`/consultation/${doctor.username}`)"
         >
           <div class="room-header">
-            <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <a-badge status="processing" text="在线" />
+            <img :src="doctor.avatar" :alt="doctor.realName" class="doctor-avatar" />
+            <a-badge status="processing" :text="$t('home.online')" />
           </div>
           <div class="room-body">
-            <h3>{{ doctor.name }}</h3>
+            <h3>{{ doctor.realName }}</h3>
             <p class="doctor-title">{{ doctor.title }} · {{ doctor.department }}</p>
-            <p class="doctor-experience">{{ doctor.experience }}</p>
+            <p class="doctor-experience">{{ $t('home.yearsExp', { n: doctor.yearsOfExperience }) }}</p>
             <div class="doctor-specialties">
-              <a-tag v-for="specialty in doctor.specialties" :key="specialty" color="blue">
-                {{ specialty }}
+              <a-tag v-for="s in doctor.specialty" :key="s" color="blue">
+                {{ s }}
               </a-tag>
             </div>
           </div>
           <div class="room-footer">
-            <a-button type="primary" block>进入诊室</a-button>
+            <a-button type="primary" block>{{ $t('home.enterRoom') }}</a-button>
           </div>
         </div>
       </div>
@@ -105,28 +121,79 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { store } from '../store';
+import { useI18n } from 'vue-i18n';
 import {
   CheckCircleOutlined,
   TeamOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
-  UserOutlined
+  UserOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons-vue';
+import axios from 'axios';
+import { store } from '../store';
+
+interface Doctor {
+  id: number;
+  username: string;
+  realName: string;
+  title: string;
+  department: string;
+  avatar: string;
+  yearsOfExperience: number;
+  specialty: string[];
+  status: string;
+}
 
 const router = useRouter();
+const { locale, t } = useI18n();
 
-const statistics = computed(() => store.getStatistics());
-const activeDoctors = computed(() => store.getActiveDoctors());
+const doctors = ref<Doctor[]>([]);
+
+const activeDoctors = computed(() => doctors.value.filter(d => d.status === 'active'));
+
+const statistics = computed(() => {
+  const totalQuestions = store.state.questions.length;
+  const activeSessions = store.state.questions.filter(q => q.status === 'pending').length;
+  return { totalQuestions, activeSessions };
+});
+
+const changeLanguage = ({ key }: { key: string }) => {
+  locale.value = key;
+  localStorage.setItem('lang', key);
+};
 
 const navigateTo = (path: string) => {
   router.push(path);
 };
+
+onMounted(async () => {
+  const savedLang = localStorage.getItem('lang');
+  if (savedLang) {
+    locale.value = savedLang;
+  }
+
+  try {
+    const res = await axios.get('http://localhost:8081/api/doctors');
+    if (res.data.code === 200) {
+      doctors.value = res.data.data;
+    }
+  } catch (e) {
+    console.error('Failed to fetch doctors:', e);
+  }
+});
 </script>
 
 <style scoped>
+.lang-switch {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 1001;
+}
+
 .home {
   padding-top: 64px;
 }
@@ -291,7 +358,7 @@ const navigateTo = (path: string) => {
 .room-card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow:  4px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s;
@@ -365,9 +432,9 @@ const navigateTo = (path: string) => {
     font-size: 16px;
   }
 
-  .statistics {
+ /* .statistics {
     grid-template-columns: 1fr;
-  }
+  }*/
 
   .active-rooms h2 {
     font-size: 28px;
